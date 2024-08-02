@@ -49,7 +49,7 @@ impl TauriEframeNativeApp {
         self.about_counter += 1;
         self.windows.push(WindowInfo {
             title: format!("About{}", self.about_counter),
-            content: format!("This is About window #{}.\nThis is a Tauri Native App using EFrame!", self.about_counter),
+            content: format!("This is About Window #{}.\nThis is a Tauri Native App using EFrame!", self.about_counter),
             size: egui::vec2(400.0, 100.0),
             collapsed: false,
         });
