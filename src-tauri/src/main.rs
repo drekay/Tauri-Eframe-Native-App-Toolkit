@@ -8,7 +8,9 @@ struct TauriEframeNativeApp {
     central_panel_rect: egui::Rect,
     expand_icon: egui::TextureHandle,
     collapse_icon: egui::TextureHandle,
-    grid_size: f32,
+    expanded_height: f32,
+    collapsed_height: f32,
+    gap_height: f32,
     dragged_window: Option<DraggedWindow>,
     user_input: String,
     grid: Vec<usize>,
@@ -38,7 +40,9 @@ impl TauriEframeNativeApp {
             central_panel_rect: egui::Rect::NOTHING,
             expand_icon,
             collapse_icon,
-            grid_size: 110.0,
+            expanded_height: 80.0,
+            collapsed_height: 40.0,
+            gap_height: 10.0,
             dragged_window: None,
             user_input: String::new(),
             grid: Vec::new(),
@@ -59,7 +63,23 @@ impl TauriEframeNativeApp {
     fn get_window_pos(&self, grid_index: usize) -> egui::Pos2 {
         let left_edge = self.central_panel_rect.left() + 10.0;
         let top_edge = self.central_panel_rect.top() + 10.0;
-        egui::pos2(left_edge, top_edge + (grid_index as f32 * self.grid_size))
+        let mut y_offset = 0.0;
+        for &window_index in self.grid.iter().take(grid_index) {
+            y_offset += if self.windows[window_index].collapsed {
+                self.collapsed_height + self.gap_height
+            } else {
+                self.expanded_height
+            };
+        }
+        egui::pos2(left_edge, top_edge + y_offset)
+    }
+
+    fn get_window_height(&self, window_index: usize) -> f32 {
+        if self.windows[window_index].collapsed {
+            self.collapsed_height
+        } else {
+            self.expanded_height
+        }
     }
 }
 
@@ -114,12 +134,12 @@ impl eframe::App for TauriEframeNativeApp {
         let mut drag_started = false;
         let mut drag_ended = false;
 
-        // Calculate window positions before the mutable borrow
+        // Calculate window positions and heights before the mutable borrow
         let window_positions: Vec<_> = self.grid.iter().enumerate()
-            .map(|(grid_index, &window_index)| (grid_index, window_index, self.get_window_pos(grid_index)))
+            .map(|(grid_index, &window_index)| (grid_index, window_index, self.get_window_pos(grid_index), self.get_window_height(window_index)))
             .collect();
 
-        for (grid_index, window_index, window_pos) in window_positions {
+        for (grid_index, window_index, window_pos, window_height) in window_positions {
             let window = &mut self.windows[window_index];
 
             let mut current_pos = window_pos;
@@ -133,7 +153,7 @@ impl eframe::App for TauriEframeNativeApp {
                 .resizable(false)
                 .collapsible(false)
                 .title_bar(false)
-                .fixed_size(if window.collapsed { egui::vec2(window.size.x, 30.0) } else { window.size })
+                .fixed_size(egui::vec2(window.size.x, window_height))
                 .current_pos(current_pos)
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
@@ -176,8 +196,12 @@ impl eframe::App for TauriEframeNativeApp {
         // Update grid positions based on dragging
         if drag_ended {
             if let Some(dragged) = self.dragged_window.take() {
-                let new_index = ((dragged.current_pos.y - self.central_panel_rect.top() - 10.0) / self.grid_size).round() as isize;
-                let new_index = new_index.clamp(0, (self.grid.len() - 1) as isize) as usize;
+                let mut cumulative_height = 0.0;
+                let new_index = self.grid.iter().position(|&index| {
+                    cumulative_height += self.get_window_height(index);
+                    dragged.current_pos.y < self.central_panel_rect.top() + 10.0 + cumulative_height
+                }).unwrap_or_else(|| self.grid.len().saturating_sub(1));
+
                 let old_index = self.grid.iter().position(|&x| x == dragged.index).unwrap();
 
                 if new_index != old_index {
@@ -192,7 +216,6 @@ impl eframe::App for TauriEframeNativeApp {
         }
     }
 }
-
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
   let options = NativeOptions::default();
