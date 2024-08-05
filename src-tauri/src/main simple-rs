@@ -1,0 +1,157 @@
+use eframe::{egui, NativeOptions};
+use std::sync::{Arc, Mutex};
+use crossbeam_channel::{unbounded, Receiver};
+
+mod plugins;
+use plugins::about_window;
+
+struct MyEguiApp {
+    state: Arc<Mutex<about_window::AboutWindowState>>,
+    receiver: Arc<Mutex<Receiver<about_window::Message>>>,
+}
+
+impl eframe::App for MyEguiApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let mut state = self.state.lock().unwrap();
+        let receiver = self.receiver.lock().unwrap();
+
+        // Process messages from the channel
+        while let Ok(message) = receiver.try_recv() {
+            match message {
+                about_window::Message::AddWindow => {
+                    let new_id = state.about_counter + 1;
+                    let new_window = about_window::WindowInfo {
+                        id: new_id,
+                        title: format!("About{}", new_id),
+                        content: format!("This is About window #{}.\nThis is a Rust-only app using EGUI!", new_id),
+                        size: (400.0, 100.0),
+                        collapsed: false,
+                    };
+                    state.about_counter = new_id;
+                    state.windows.push(new_window);
+                }
+                about_window::Message::CollapseWindow(window_id) => {
+                    if let Some(window) = state.windows.iter_mut().find(|w| w.id == window_id) {
+                        window.collapsed = !window.collapsed;
+                    }
+                }
+                about_window::Message::DragWindowStart(window_id, pos) => {
+                    let index = state.windows.iter().position(|w| w.id == window_id).unwrap();
+                    state.dragged_window = Some(about_window::DraggedWindow {
+                        index,
+                        start_pos: pos,
+                        current_pos: pos,
+                    });
+                }
+                about_window::Message::DragWindowMove(pos) => {
+                    if let Some(ref mut dragged) = state.dragged_window {
+                        dragged.current_pos = pos;
+                    }
+                }
+                about_window::Message::DragWindowEnd => {
+                    if let Some(dragged) = state.dragged_window.take() {
+                        let mut cumulative_height = 0.0;
+                        let new_index = state.windows.iter().position(|window| {
+                            cumulative_height += if window.collapsed {
+                                state.collapsed_height + state.gap_height
+                            } else {
+                                state.expanded_height
+                            };
+                            dragged.current_pos.1 < 10.0 + cumulative_height
+                        }).unwrap_or_else(|| state.windows.len().saturating_sub(1));
+
+                        if new_index != dragged.index {
+                            let window = state.windows.remove(dragged.index);
+                            state.windows.insert(new_index, window);
+                        }
+                    }
+                }
+            }
+        }
+
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            if ui.button("Add About Window").clicked() {
+                let _ = state.sender.send(about_window::Message::AddWindow);
+            }
+        });
+
+        let mut messages_to_send = Vec::new();
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            for window in &mut state.windows {
+                let mut current_pos = egui::pos2(window.size.0, window.size.1);
+
+                let window_response = egui::Window::new(&window.title)
+                    .resizable(false)
+                    .collapsible(false)
+                    .title_bar(false)
+                    .fixed_size(egui::vec2(window.size.0, window.size.1))
+                    .current_pos(current_pos)
+                    .show(ctx, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label(&window.title);
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                let icon = if window.collapsed { "Expand" } else { "Collapse" };
+                                if ui.button(icon).clicked() {
+                                    messages_to_send.push(about_window::Message::CollapseWindow(window.id));
+                                }
+                            });
+                        });
+                        if !window.collapsed {
+                            ui.label(&window.content);
+                        }
+                    });
+
+                let response = window_response.unwrap().response;
+
+                if response.drag_started() {
+                    messages_to_send.push(about_window::Message::DragWindowStart(window.id, (current_pos.x, current_pos.y)));
+                }
+
+                if response.dragged() {
+                    if let Some(pos) = ctx.input(|i| i.pointer.interact_pos()) {
+                        messages_to_send.push(about_window::Message::DragWindowMove((pos.x, pos.y)));
+                    }
+                }
+
+                if response.drag_released() {
+                    messages_to_send.push(about_window::Message::DragWindowEnd);
+                }
+            }
+        });
+
+        // Send all collected messages
+        for message in messages_to_send {
+            let _ = state.sender.send(message);
+        }
+    }
+}
+
+fn main() -> Result<(), eframe::Error> {
+    let options = NativeOptions::default();
+    
+    eframe::run_native(
+        "My eframe app",
+        options,
+        Box::new(|_cc| {
+            // Create state and receiver inside the closure
+            let (sender, receiver) = unbounded();
+            let state = Arc::new(Mutex::new(about_window::AboutWindowState {
+                windows: Vec::new(),
+                about_counter: 0,
+                expanded_height: 110.0,
+                collapsed_height: 40.0,
+                gap_height: 64.0,
+                dragged_window: None,
+                sender,
+            }));
+
+            let receiver = Arc::new(Mutex::new(receiver));
+
+            Ok(Box::new(MyEguiApp {
+                state: state,
+                receiver: receiver,
+            }))
+        }),
+    )
+}
