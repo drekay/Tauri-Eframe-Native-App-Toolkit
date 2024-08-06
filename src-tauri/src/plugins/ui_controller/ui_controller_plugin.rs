@@ -72,11 +72,22 @@ impl UiController {
         egui::TopBottomPanel::top("ui_controller_top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
+                    if ui.button("New").clicked() { println!("New file"); }
+                    if ui.button("Open").clicked() { println!("Open file"); }
+                    if ui.button("Save").clicked() { println!("Save file"); }
+                    if ui.button("Close (2)").clicked() {
+                        messages_to_send.push(Message::CloseWindow(2)); //todo: pass window_id
+                    }
                     if ui.button("Quit").clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
+                     }
                 });
-                ui.menu_button("About", |ui| {
+                ui.menu_button("Edit", |ui| {
+                    if ui.button("Cut").clicked() { println!("Cut"); }
+                    if ui.button("Copy").clicked() { println!("Copy"); }
+                    if ui.button("Paste").clicked() { println!("Paste"); }
+                });
+                ui.menu_button("Help", |ui| {
                     if ui.button("Add About Window").clicked() {
                         messages_to_send.push(Message::AddWindow);
                     }
@@ -183,7 +194,7 @@ impl UiController {
         let new_window = WindowInfo {
             id: new_id,
             title: format!("About{}", new_id),
-            content: format!("This is About window #{}.\nThis is a Rust-only app using EGUI!", new_id),
+            content: format!("This is About Window #{}.\nThis is a Tauri Native App using EFrame", new_id),
             size: wsize,
             collapsed: false,
         };

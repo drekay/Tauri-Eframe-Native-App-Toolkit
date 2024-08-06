@@ -17,7 +17,7 @@ pub struct WindowInfo {
     pub id: usize,
     pub title: String,
     pub content: String,
-    pub size: (f32, f32),  // Changed from egui::Vec2 to (f32, f32
+    pub size: (f32, f32),
     pub collapsed: bool,
 }
 
