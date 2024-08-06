@@ -96,6 +96,12 @@ impl UiController {
         });
 
         self.central_panel_rect = egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("Tauri EFrame Native Demo App");
+            ui.add_space(10.0);
+            ui.heading("How to use.");
+            ui.label("Click 'Help' -> 'About' to open new About windows.");
+            ui.label("Drag windows vertically to reorder them.");
+            
             egui::ScrollArea::vertical().show(ui, |ui| {
                 let state = self.state.lock().unwrap();
                 let windows = state.windows.clone();

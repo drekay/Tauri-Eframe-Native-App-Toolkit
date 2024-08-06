@@ -1,5 +1,4 @@
 use serde::{Serialize, Deserialize};
-use egui::Pos2;
 
 pub struct AboutWindowState {
     pub windows: Vec<WindowInfo>,
