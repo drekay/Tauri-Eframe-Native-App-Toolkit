@@ -6,20 +6,13 @@ mod plugins;
 use plugins::about_window;
 use plugins::ui_controller::UiController;
 
-struct MyEguiApp {
+struct TauriEframeNativeApp {
     state: Arc<Mutex<about_window::AboutWindowState>>,
     ui_controller: UiController,
 }
 
-impl eframe::App for MyEguiApp {
+impl eframe::App for TauriEframeNativeApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            if ui.button("Add About Window").clicked() {
-                let state = self.state.lock().unwrap();
-                let _ = state.sender.send(about_window::Message::AddWindow);
-            }
-        });
-
         let messages = self.ui_controller.update(ctx);
 
         // Send all collected messages
@@ -47,11 +40,12 @@ fn main() -> Result<(), eframe::Error> {
                 gap_height: 10.0,
                 dragged_window: None,
                 sender: sender.clone(),
+                grid: Vec::new(),
             }));
 
-            let ui_controller = UiController::new(state.clone(), receiver);
-
-            Ok(Box::new(MyEguiApp {
+            let ui_controller = UiController::new(&_cc.egui_ctx, state.clone(), receiver);
+   
+            Ok(Box::new(TauriEframeNativeApp {
                 state: state,
                 ui_controller,
             }))
