@@ -2,6 +2,7 @@ use eframe::egui;
 use std::sync::{Arc, Mutex};
 use crossbeam_channel::Receiver;
 use crate::plugins::about_window::{AboutWindowState, Message, WindowInfo, DraggedWindow};
+use image::GenericImageView;
 
 pub struct UiController {
     state: Arc<Mutex<AboutWindowState>>,
@@ -10,12 +11,27 @@ pub struct UiController {
 
 impl UiController {
     pub fn new(state: Arc<Mutex<AboutWindowState>>, receiver: Receiver<Message>) -> Self {
-        UiController { state, receiver }
+        let ui_controller = UiController { state, receiver };
+        
+        // Load icons
+       /* let ctx = egui::Context::default();
+        ui_controller.load_texture(&ctx, "collapse_icon", include_bytes!("../../../../assets/collapse_icon.png"));
+        ui_controller.load_texture(&ctx, "expand_icon", include_bytes!("../../../../assets/expand_icon.png"));
+        */
+        ui_controller
+    }
+
+    fn load_texture(&self, ctx: &egui::Context, name: &str, image_data: &[u8]) {
+        let image = image::load_from_memory(image_data).unwrap().to_rgba8();
+        let size = [image.width() as _, image.height() as _];
+        let image_buffer = image.into_raw();
+        let color_image = egui::ColorImage::from_rgba_unmultiplied(size, &image_buffer);
+        ctx.load_texture(name, color_image, Default::default());
     }
 
     pub fn update(&self, ctx: &egui::Context) -> Vec<Message> {
         let mut messages_to_send = Vec::new();
-
+    
         // Process pending messages
         while let Ok(message) = self.receiver.try_recv() {
             let mut state = self.state.lock().unwrap();
@@ -35,77 +51,106 @@ impl UiController {
                 Message::DragWindowEnd => {
                     self.end_drag(&mut state);
                 }
+               /* Message::CloseWindow(window_id) => {
+                    self.close_window(&mut state, window_id);
+                }*/
             }
         }
-
+    
+        // Add the menu bar
+        egui::TopBottomPanel::top("ui_controller_top_panel").show(ctx, |ui| {
+            egui::menu::bar(ui, |ui| {
+                ui.menu_button("File", |ui| {
+                    if ui.button("Quit").clicked() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                });
+                ui.menu_button("About", |ui| {
+                    if ui.button("Add About Window").clicked() {
+                        messages_to_send.push(Message::AddWindow);
+                    }
+                });
+            });
+        });
+    
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
-                let state = self.state.lock().unwrap();
-                let gap_height = state.gap_height;
-                let expanded_height = state.expanded_height;
-                let collapsed_height = state.collapsed_height;
+                let mut state = self.state.lock().unwrap();
                 let windows = state.windows.clone();
+                let dragged_window = state.dragged_window.clone();
                 drop(state);
-
-                let mut y_offset = 0.0;
-                for window in windows.iter() {
-                    let window_height = if window.collapsed {
-                        collapsed_height
-                    } else {
-                        expanded_height
-                    };
-
-                    let window_rect = egui::Rect::from_min_size(
-                        egui::pos2(0.0, y_offset),
-                        egui::vec2(ui.available_width(), window_height),
-                    );
-
-                    let response = ui.allocate_rect(window_rect, egui::Sense::click_and_drag());
-
-                    ui.put(window_rect, |ui: &mut egui::Ui| {
-                        egui::Frame::none()
-                            .fill(ui.style().visuals.window_fill)
-                            .show(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.label(&window.title);
-                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                        let icon = if window.collapsed { "Expand" } else { "Collapse" };
-                                        if ui.button(icon).clicked() {
-                                            messages_to_send.push(Message::CollapseWindow(window.id));
-                                        }
-                                    });
-                                });
-                                if !window.collapsed {
-                                    ui.label(&window.content);
-                                }
-                            })
-                            .response
-                    });
-
-                    if ui.rect_contains_pointer(window_rect) {
-                        if response.drag_started() {
-                            messages_to_send.push(Message::DragWindowStart(window.id, (window_rect.left(), window_rect.top())));
+    
+                let mut drag_started = false;
+                let mut drag_ended = false;
+    
+                for (index, window) in windows.iter().enumerate() {
+                    let mut is_open = true;
+                    let window_id = egui::Id::new(format!("about_window_{}", window.id));
+                    let mut window_ui = egui::Window::new(&window.title)
+                        .id(window_id)
+                        .resizable(false)
+                        .collapsible(false)
+                        .default_size(window.size)
+                        .open(&mut is_open);
+    
+                    if let Some(ref dragged) = dragged_window {
+                        if dragged.index == index {
+                            window_ui = window_ui.current_pos(egui::pos2(dragged.current_pos.0, dragged.current_pos.1));
                         }
-
-                        if response.dragged() {
-                            if let Some(pos) = response.interact_pointer_pos() {
+                    }
+    
+                    let response = window_ui.show(ctx, |ui| {
+                        ui.horizontal(|ui| {
+                            ui.label(&window.title);
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                let icon = if window.collapsed { "Expand" } else { "Collapse" };
+                                if ui.button(icon).clicked() {
+                                    messages_to_send.push(Message::CollapseWindow(window.id));
+                                }
+                            });
+                        });
+                        if !window.collapsed {
+                            ui.label(&window.content);
+                        }
+                    });
+    
+                    if let Some(response) = response {
+                        if response.response.drag_started() {
+                            messages_to_send.push(Message::DragWindowStart(window.id, response.response.rect.left_top().into()));
+                            drag_started = true;
+                        }
+    
+                        if response.response.dragged() {
+                            if let Some(pos) = response.response.interact_pointer_pos() {
                                 messages_to_send.push(Message::DragWindowMove((pos.x, pos.y)));
                             }
                         }
-
-                        if response.drag_released() {
+    
+                        if response.response.drag_released() {
                             messages_to_send.push(Message::DragWindowEnd);
+                            drag_ended = true;
                         }
+    
+                       /* if !is_open {
+                            messages_to_send.push(Message::CloseWindow(window.id));
+                        }*/
                     }
-
-                    y_offset += window_height + gap_height;
+                }
+    
+                if drag_started || drag_ended || dragged_window.is_some() {
+                    ctx.request_repaint();
                 }
             });
         });
-
+    
+        // Send all collected messages
+        for message in messages_to_send.clone() {
+            let _ = self.state.lock().unwrap().sender.send(message);
+        }
+    
         messages_to_send
     }
-
+    
     fn add_window(&self, state: &mut AboutWindowState) {
         let new_id = state.about_counter + 1;
         let new_window = WindowInfo {
@@ -157,5 +202,9 @@ impl UiController {
                 state.windows.insert(new_index, window);
             }
         }
+    }
+
+    fn close_window(&self, state: &mut AboutWindowState, window_id: usize) {
+        state.windows.retain(|w| w.id != window_id);
     }
 }
