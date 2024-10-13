@@ -1,2 +1,3 @@
+// plugins.rs
 pub mod ui_controller;
-pub mod about_window;
+pub mod window_management;

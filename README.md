@@ -1,86 +1,70 @@
 # Tauri Eframe Native App Toolkit
 
-A toolkit for creating native applications using Tauri and Eframe, with a focus on producing cross-platform desktop applications with a great native experience.
+A toolkit for creating native applications using Tauri and Eframe, with a focus on producing cross-platform desktop applications with a great native experience. This toolkit now uses a Plugin Architecture for improved modularity and extensibility.
 
-# NB: This is still EXPERIMENTAL and UNDER DEVELOPMENT!!
+**NB: This is still EXPERIMENTAL and UNDER DEVELOPMENT!!**
 
 ## Dependencies
 
 | Component | Description | Version |
 |-----------|-------------|---------|
-| tauri | runtime core | [![](https://img.shields.io/crates/v/tauri.svg)](https://crates.io/crates/tauri) |
-| egui | immediate mode GUI library for Rust | [![](https://img.shields.io/crates/v/egui.svg)](https://crates.io/crates/egui) |
+| tauri     | runtime core | [latest] |
+| egui      | immediate mode GUI library for Rust | [latest] |
 
 ## Motivation
 
-The goal of this toolkit is to enable developers to produce cross-platform desktop applications that offer a seamless and native user experience. By leveraging the power of Tauri and Eframe, developers can build applications that are both lightweight and performant.
+The goal of this toolkit is to enable developers to produce cross-platform desktop applications that offer a seamless and native user experience. By leveraging the power of Tauri and Eframe, developers can build applications that are both lightweight and performant. The new Plugin Architecture allows for more flexible and maintainable code.
+
+## Plugin Architecture
+
+The toolkit now uses a Plugin Architecture, which includes:
+
+- `UiControllerPlugin`: Manages the overall UI and coordinates between plugins.
+- `AboutWindowPlugin`: Handles specific tasks related to windows (like showing and removing them).
+- `WindowControllerPlugin`: Manages high-level tasks like verifying window closures and informing associated plugins.
 
 ## Example: How to Create an Application with Draggable Windows
 
-Here's a simplified example of how to create a basic application with draggable windows using Tauri and Eframe. For full implementation details, refer to the `main.rs` source file.
-
-### Steps:
-
-1. **Initialize the Project**:
-    - Create a new Rust project.
-    - Add dependencies for `tauri` and `eframe` in your `Cargo.toml`.
-
-2. **Define the Application State**:
-    - Create a struct to hold the application state, including window information and dragging state.
-
-3. **Implement the Application Logic**:
-    - Define methods for adding windows and calculating their positions.
-    - Implement the `eframe::App` trait for your application state.
-
-4. **Handle Dragging Logic**:
-    - Track the dragged window and update its position in real-time.
-    - Reorder windows based on the final position of the dragged window.
-
-5. **Run the Application**:
-    - Use `eframe::run_native` to run your application.
-
-### Code Example:
+Here's a simplified example of how to create a basic application with draggable windows using Tauri, Eframe, and our Plugin Architecture:
 
 ```rust
-struct MyEguiApp {
-    windows: Vec<WindowInfo>,
-    dragged_window: Option<DraggedWindow>,
-    grid: Vec<usize>,
-    // other fields...
+use eframe::{egui, NativeOptions};
+use your_crate::{UiControllerPlugin, AboutWindowPlugin, WindowControllerPlugin};
+
+struct TauriEframeNativeApp {
+    ui_controller: UiControllerPlugin,
 }
 
-impl MyEguiApp {
+impl TauriEframeNativeApp {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // initialization code...
-    }
+        let (tx, rx) = crossbeam_channel::unbounded();
+        let about_window_plugin = AboutWindowPlugin::new(tx.clone(), rx.clone());
+        let window_controller_plugin = WindowControllerPlugin::new(tx.clone(), rx);
 
-    fn add_about_window(&mut self) {
-        // code to add a new window...
-    }
+        let ui_controller = UiControllerPlugin::new(vec![
+            Box::new(about_window_plugin),
+            Box::new(window_controller_plugin),
+        ]);
 
-    fn get_window_pos(&self, grid_index: usize) -> egui::Pos2 {
-        // code to calculate window position...
+        Self { ui_controller }
     }
 }
 
-impl eframe::App for MyEguiApp {
+impl eframe::App for TauriEframeNativeApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // code to handle UI layout, dragging, and reordering...
+        self.ui_controller.update();
+        
+        egui::CentralPanel::default().show(ctx, |ui| {
+            self.ui_controller.execute(ui, ctx);
+        });
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), eframe::Error> {
     let options = NativeOptions::default();
     eframe::run_native(
-        "Tauri EGUI Demo",
+        "Tauri Eframe Native Toolkit Demo",
         options,
-        Box::new(|cc| Ok(Box::new(MyEguiApp::new(cc)))),
-    )?;
-    Ok(())
+        Box::new(|cc| Ok(Box::new(TauriEframeNativeApp::new(cc)))),
+    )
 }
-```
-
-For the full implementation, please refer to the main.rs source file.
-
-## License
-This project is licensed under the MIT License.

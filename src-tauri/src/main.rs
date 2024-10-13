@@ -1,54 +1,54 @@
-use eframe::{egui, NativeOptions};
+//main.rs
+use eframe::{egui, CreationContext, NativeOptions, App};
+use plugins::window_management::{WindowPlugin, WindowState, WindowControllerPlugin};
 use std::sync::{Arc, Mutex};
-use crossbeam_channel::unbounded;
+use crossbeam_channel::{unbounded, Sender};
 
 mod plugins;
-use plugins::about_window;
-use plugins::ui_controller::UiController;
+use crate::plugins::ui_controller::UiControllerPlugin;
 
 struct TauriEframeNativeApp {
-    state: Arc<Mutex<about_window::AboutWindowState>>,
-    ui_controller: UiController,
+    ui_controller: UiControllerPlugin,
 }
 
-impl eframe::App for TauriEframeNativeApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let messages = self.ui_controller.update(ctx);
+impl TauriEframeNativeApp {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let (tx, rx) = crossbeam_channel::unbounded();
+        let state = Arc::new(Mutex::new(WindowState::new(tx.clone())));
+        
+        let (tx, rx) = crossbeam_channel::unbounded();
+        let mut ui_controller = UiControllerPlugin::new(cc, tx.clone(), state.clone());
+        
+        let window_plugin = WindowPlugin::new(tx.clone(),rx.clone());
+        ui_controller.add_plugin(Box::new(window_plugin));
+        
+        let window_management_plugin = WindowControllerPlugin::new(tx.clone(),rx.clone());
+        ui_controller.add_plugin(Box::new(window_management_plugin));
+        
+        // Add other plugins as needed
+        // let new_plugin = NewPlugin::new(tx.clone(),rx.clone());
+        // ui_controller.add_plugin(Box::new(new_plugin));
 
-        // Send all collected messages
-        let state = self.state.lock().unwrap();
-        for message in messages {
-            let _ = state.sender.send(message);
+        Self {
+            ui_controller,
+            // initialize other fields if needed...
         }
+    }
+}
+
+impl App for TauriEframeNativeApp {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        self.ui_controller.update(ctx, frame);
+      //  println!("Main update");
     }
 }
 
 fn main() -> Result<(), eframe::Error> {
     let options = NativeOptions::default();
-    
-    eframe::run_native(
-        "My eframe app",
-        options,
-        Box::new(|_cc| {
-            // Create state and channels inside the closure
-            let (sender, receiver) = unbounded();
-            let state = Arc::new(Mutex::new(about_window::AboutWindowState {
-                windows: Vec::new(),
-                about_counter: 0,
-                expanded_height: 110.0,
-                collapsed_height: 40.0,
-                gap_height: 10.0,
-                dragged_window: None,
-                sender: sender.clone(),
-                grid: Vec::new(),
-            }));
 
-            let ui_controller = UiController::new(&_cc.egui_ctx, state.clone(), receiver);
-   
-            Ok(Box::new(TauriEframeNativeApp {
-                state: state,
-                ui_controller,
-            }))
-        }),
+    eframe::run_native(
+        "window_management Demo",
+        options,
+        Box::new(|cc| Ok(Box::new(TauriEframeNativeApp::new(cc))))
     )
 }

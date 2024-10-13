@@ -1,7 +1,7 @@
 [package]
 name = "app"
 version = "0.1.1"
-description = "A Tauri App built with the Tauri Eframe Native App Toolkit"
+description = "A Tauri App built with the window_management App Toolkit"
 authors = ["Andrew Kalonga"]
 license = "MIT"
 repository = ""
