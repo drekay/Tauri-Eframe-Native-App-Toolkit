@@ -11,7 +11,7 @@
   "app": {
     "windows": [
       {
-        "title": "Tauri Eframe",
+        "title": "Tauri Eframe Native App Toolkit",
         "width": 800,
         "height": 600,
         "resizable": true,

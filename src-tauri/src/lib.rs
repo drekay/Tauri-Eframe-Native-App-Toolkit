@@ -36,6 +36,6 @@ impl eframe::App for TauriEframeNativeApp {
    
 
     // Pass the shared state to the UI controller
-    self.ui_controller.update(ctx, frame);
+    self.ui_controller.update(ctx);//, frame);
 }
 }

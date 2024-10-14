@@ -38,7 +38,7 @@ impl TauriEframeNativeApp {
 
 impl App for TauriEframeNativeApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        self.ui_controller.update(ctx, frame);
+        self.ui_controller.update(ctx);
       //  println!("Main update");
     }
 }

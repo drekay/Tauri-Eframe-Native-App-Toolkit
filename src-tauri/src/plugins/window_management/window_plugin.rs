@@ -1,8 +1,10 @@
 // plugins/window_management/about_window_plugin.rs
 use std::sync::{Arc, Mutex};
 use eframe::egui::{self};
-use crossbeam_channel::{Receiver, Sender};
+use std::collections::HashMap;
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use super::FramePlugin;
 const FRAME_HEIGHT: f32 = 100.0;
 
@@ -32,28 +34,26 @@ impl FramePlugin for WindowPlugin {
                 }
                 println!("confirmed window close");
             }
-        },        
-            Message::CloseWindow(index) => {
-                println!("Just close");
-                if index < state.windows.len() {
-                    state.windows.remove(index);
-                }
-            },
+        },  
             Message::CollapseWindow(window_id) => todo!(),
             Message::DragWindowStart(window_id, pos) => todo!(),
             Message::DragWindowMove(pos) => todo!(),
-            _ => {} // Ignore messages not relevant to this plugin
+            _ => {
+                println!("message ignored")
+            } // Ignore messages not relevant to this plugin
         }
     }       
 
     fn update(&self) {
-        while let Ok(message) = self.receiver.try_recv() {
+        if let Some(receiver) = &self.receiver {
+        while let Ok(message) = receiver.try_recv() {
             println!("receiving...");
             self.handle_message(message);
         }
+        }
     }  
 
-    fn execute(&self, ui: &mut egui::Ui, ctx: &egui::Context) {
+   fn execute(&self, ui: &mut egui::Ui, ctx: &egui::Context) {
        // println!("about window plugin render windows");
         self.render_windows(ui);
     }
@@ -61,8 +61,18 @@ impl FramePlugin for WindowPlugin {
     fn is_dragging(&self) -> bool {
         self.dragged_window.is_some()
     }
+    
+    fn name(&self) -> &str {
+        &self.name
+    }
+    
+    fn set_receiver(&mut self, rx: Receiver<Message>) {
+        self.receiver = Some(rx);  // Set the receiver when the plugin is registered
+    }
+    
+   
 }
-//
+
 pub struct WindowPlugin {
     windows: Vec<Frame>,
     about_counter: usize,
@@ -70,8 +80,9 @@ pub struct WindowPlugin {
     dragged_window: Option<DraggedWindow>,
     drag_offset: egui::Vec2,
     tx: Sender<Message>,
-    receiver: Receiver<Message>,
+    receiver: Option<Receiver<Message>>,
     state: Arc<Mutex<WindowState>>,
+    name: String,
 }
 
 pub struct Frame {
@@ -109,8 +120,8 @@ impl WindowState {
             windows: Vec::new(),
             grid: Vec::new(),
             about_counter: 0,
-            expanded_height: 100.0, // Set a default value
-            collapsed_height: 30.0, // Set a default value
+            expanded_height: 100.0, 
+            collapsed_height: 30.0, 
             sender,
         }
     }
@@ -122,7 +133,7 @@ pub struct DraggedWindow {
 }
 
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Message {
     AddWindow,
     CollapseWindow(usize),
@@ -134,9 +145,45 @@ pub enum Message {
     ConfirmedCloseWindow(usize),
 } //DragWindowEnd,
 
+//// MESSAGE BUS ////
+pub struct MessageBus {
+    pub senders: HashMap<String, Sender<Message>>,
+    pub receiver: Receiver<Message>,
+}
+
+impl MessageBus {
+    pub fn new() -> Self {
+        let (tx, rx) = unbounded();
+        Self {
+            senders: HashMap::new(),
+            receiver: rx,
+        }
+    }
+
+    pub fn register_plugin(&mut self, plugin_name: &str) -> Receiver<Message> {
+        let (tx, rx) = unbounded();
+        self.senders.insert(plugin_name.to_string(), tx);
+        rx
+    }
+
+    pub fn send(&self, target: &str, message: Message) {
+        if let Some(sender) = self.senders.get(target) {
+            sender.send(message).unwrap();
+        }
+    }
+
+    pub fn broadcast(&self, message: Message) {
+        for sender in self.senders.values() {
+            sender.send(message.clone()).unwrap();
+        }
+    }
+}
+////  END MESSAGE BUS ////
+
 impl WindowPlugin {
     pub fn new(tx: Sender<Message>, rx: Receiver<Message>)  -> Self {
         let mut plugin = Self {
+            name: "WindowPlugin".to_string(),
             windows: Vec::new(),
             about_counter: 0,
             grid: Vec::new(),
@@ -146,12 +193,12 @@ impl WindowPlugin {
                 windows: Vec::new(),
                 grid: Vec::new(),
                 about_counter: 0,
-                expanded_height: 100.0, // Set a default value
-                collapsed_height: 30.0, // Set a default value
-                sender: tx.clone(), // Clone the sender for the state
+                expanded_height: 100.0,
+                collapsed_height: 30.0, 
+                sender: tx.clone(), 
             })),
             tx: tx,
-            receiver: rx,
+            receiver: None,
         };
         plugin.add_placeholder_window();
         plugin
@@ -231,8 +278,8 @@ impl WindowPlugin {
             let _ = self.sender.send(message);
         }
     }*/
-    ////
-    fn add_window_management(&mut self) {
+    ////Todo: use this instead
+    fn add_window(&mut self) {
         self.about_counter += 1;
         self.windows.push(Frame::new(
             "&format!(About{}, self.about_counter".to_string(),  self.about_counter,
@@ -292,13 +339,7 @@ impl Frame {
         }
     }
 
-    /*fn show(&mut self, ui: &mut egui::Ui, index: usize, expand_icon: &egui::TextureHandle, collapse_icon: &egui::TextureHandle, tx: &Sender<Message>) -> egui::Response {
-        // Implementation similar to your original Frame::show method
-        // Use tx to send messages for close and minimize actions
-    }*/
-    //fn show(&mut self, ui: &mut egui::Ui, index: usize) -> (egui::Response, bool, bool, bool, usize, egui::Vec2) {
-    
-    fn show(&mut self, ui: &mut egui::Ui, index: usize /* , expand_icon: &egui::TextureHandle, collapse_icon: &egui::TextureHandle, tx: &Sender<Message>*/) -> 
+    fn show(&mut self, ui: &mut egui::Ui, index: usize) -> 
     (egui::Response, bool, bool, bool, usize, egui::Vec2) {
          let mut is_closed = false;
         let mut drag_started = false;
