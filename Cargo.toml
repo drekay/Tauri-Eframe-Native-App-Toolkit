@@ -1,0 +1,31 @@
+[workspace]
+members = [
+    "app_core",
+    "plugins/window_management",
+    "plugins/ui_controller",
+    "app_main",
+    "src-tauri"
+]
+
+[workspace.dependencies]
+eframe = "0.22.0"
+egui = "0.22.0"
+crossbeam-channel = "0.5"
+libloading = "0.7"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A Tauri-based native application toolkit using eframe"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies.tauri]
+version = "1.4"
+features = ["api-all"]

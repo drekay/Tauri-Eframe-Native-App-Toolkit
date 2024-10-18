@@ -1,0 +1,11 @@
+[package]
+name = "app_main"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+app_core = { path = "../app_core" }
+eframe = { workspace = true }
+egui = { workspace = true }
+window_management = { path = "../plugins/window_management" }
+ui_controller = { path = "../plugins/ui_controller" }

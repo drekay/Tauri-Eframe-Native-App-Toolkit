@@ -1,8 +1,8 @@
 // plugins/window_management/window_controller_plugin.rs
 use std::collections::HashMap;
 use crossbeam_channel::{Receiver, Sender};
-
-use super::{FramePlugin, Message};
+use eframe::egui;
+use crate::{Message, Plugin, UIPlugin};
 
 pub struct WindowControllerPlugin {
     receiver: Option<Receiver<Message>>,
@@ -55,8 +55,20 @@ impl WindowControllerPlugin {
     }
 }
 
-impl FramePlugin for WindowControllerPlugin {
-    fn update(&self) {
+impl Plugin for WindowControllerPlugin {
+    fn update(&mut self, ctx: &egui::Context, rx: &Receiver<Message>, tx: &Sender<Message>) {
+        // Process incoming messages
+        while let Ok(message) = rx.try_recv() {
+        //    self.handle_message(message, tx);
+        println!("WindowControllerPlugin update");
+        }
+    }
+    
+    fn name(&self) -> &str {
+        "WindowControllerPlugin"
+    }
+
+   /* fn update(&self) {
        //println!("windowcontroller update");
       
        if let Some(receiver) = &self.receiver {
@@ -96,5 +108,11 @@ impl FramePlugin for WindowControllerPlugin {
     
     fn set_receiver(&mut self, rx: Receiver<Message>) {
         self.receiver = Some(rx);  // Set the receiver when the plugin is registered
+    }*/
+}
+
+impl UIPlugin for WindowControllerPlugin {
+    fn update_ui(&mut self, ctx: &egui::Context) {
+        todo!()
     }
 }

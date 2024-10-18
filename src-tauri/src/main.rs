@@ -1,54 +1,45 @@
-//main.rs
-use eframe::{egui, CreationContext, NativeOptions, App};
-use plugins::window_management::{WindowPlugin, WindowState, WindowControllerPlugin};
-use std::sync::{Arc, Mutex};
-use crossbeam_channel::{unbounded, Sender};
+#![cfg_attr(
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
+)]
 
-mod plugins;
-use crate::plugins::ui_controller::UiControllerPlugin;
+use tauri::Manager;
+use eframe::egui;
+
+fn main() {
+    tauri::Builder::default()
+        .setup(|app| {
+            let window = app.get_window("main").unwrap();
+            
+            // Create the eframe app
+            let options = eframe::NativeOptions::default();
+            eframe::run_native(
+                "Tauri EFrame Native Demo",
+                options,
+                Box::new(|cc| Ok(Box::new(TauriEframeNativeApp::new(cc)))),
+            );
+
+            Ok(())
+        })
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
 
 struct TauriEframeNativeApp {
-    ui_controller: UiControllerPlugin,
+    // Your app state here
 }
 
 impl TauriEframeNativeApp {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let (tx, rx) = crossbeam_channel::unbounded();
-        let state = Arc::new(Mutex::new(WindowState::new(tx.clone())));
-        
-        let (tx, rx) = crossbeam_channel::unbounded();
-        let mut ui_controller = UiControllerPlugin::new(cc, tx.clone(), state.clone());
-        
-        let window_plugin = WindowPlugin::new(tx.clone(),rx.clone());
-        ui_controller.add_plugin(Box::new(window_plugin));
-        
-        let window_management_plugin = WindowControllerPlugin::new(tx.clone(),rx.clone());
-        ui_controller.add_plugin(Box::new(window_management_plugin));
-        
-        // Add other plugins as needed
-        // let new_plugin = NewPlugin::new(tx.clone(),rx.clone());
-        // ui_controller.add_plugin(Box::new(new_plugin));
-
+    fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // Initialize your app here
         Self {
-            ui_controller,
-            // initialize other fields if needed...
+            // Initialize your app state
         }
     }
 }
 
-impl App for TauriEframeNativeApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        self.ui_controller.update(ctx);
-      //  println!("Main update");
+impl eframe::App for TauriEframeNativeApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Your app update logic here
     }
-}
-
-fn main() -> Result<(), eframe::Error> {
-    let options = NativeOptions::default();
-
-    eframe::run_native(
-        "window_management Demo",
-        options,
-        Box::new(|cc| Ok(Box::new(TauriEframeNativeApp::new(cc))))
-    )
 }

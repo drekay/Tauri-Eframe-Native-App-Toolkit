@@ -1,0 +1,31 @@
+Todo:
+
+[x] Setup Obs & Connect to Twitch 
+[x] Do daily Twitch Streaming
+[x] Create a cool wall paper for Twitch Channel
+[ ] Show old implementation demo - if Anyone asks
+[x] Work on CoreWindow and EguiWindow
+[WIP] Make application run without loading any plugins
+[ ] Fix WindowPlugin and WindowController plugins
+[ ] Fix UIController Plugin
+
+[ ] How to build individual plugins - WindowPlugin - create [dylib], dll, dso 
+[ ] Refactor Plugin_system.rs
+[ ] Make application load dynamic library plugin - WindowPlugin
+[ ] Refactor UIController Plugin to work with the new dynamic plugin_system.rs
+[ ] Refactor Message Bus System  
+[ ] 
+[ ] 
+[ ] 
+
+[ ] Git Commit
+[ ] Add Drag & Drop code in Frame.rs
+[ ] Complete Window Messages and Responses
+[ ] Prompting system - closing window (Y/N)
+[ ] Window.rs - Add layout
+[ ] Window.rs - Render Frame in a specific part of the layout
+[ ] Test dynamic plugin hot reloading
+[ ] 
+[ ] 
+[ ] 
+[ ] 
