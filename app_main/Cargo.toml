@@ -7,5 +7,7 @@ edition = "2021"
 app_core = { path = "../app_core" }
 eframe = { workspace = true }
 egui = { workspace = true }
-window_management = { path = "../plugins/window_management" }
-ui_controller = { path = "../plugins/ui_controller" }
+
+#addback
+#window_management = { path = "../plugins/window_management" }
+#ui_controller = { path = "../plugins/ui_controller" }

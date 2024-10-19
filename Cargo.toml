@@ -1,11 +1,13 @@
 [workspace]
 members = [
     "app_core",
-    "plugins/window_management",
-    "plugins/ui_controller",
+
     "app_main",
     "src-tauri"
 ]
+#addback
+ #   "plugins/window_management",
+ #   "plugins/ui_controller",
 
 [workspace.dependencies]
 eframe = "0.22.0"

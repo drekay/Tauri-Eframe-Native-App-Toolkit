@@ -29,3 +29,44 @@ Todo:
 [ ] 
 [ ] 
 [ ] 
+
+Keep this intro here:
+
+Hi there!
+
+ This is a new channel please follow and hang around to help me improve. I am currently learning Rust by porting my application from Haxe.
+
+----------
+/Tauri-Eframe-Native-App-Toolkit
+├── app_core
+│   ├── src
+│   │   ├── lib.rs
+│   │   ├── ui.rs
+│   │   ├── message_bus.rs
+│   │   ├── plugin_system.rs
+│   │   └── app.rs
+│   └── Cargo.toml
+├── app_main
+│   ├── src
+│   │   ├── lib.rs
+│   │   └── main.rs
+│   └── Cargo.toml
+├── egui_impl
+│   ├── src
+│   │   ├── lib.rs
+│   │   ├── components.rs
+│   │   └── components
+│   │       ├── frame.rs
+│   │       └── window.rs
+│   └── Cargo.toml
+├── src-tauri
+│   ├── src
+│   │   └── main.rs
+│   ├── Cargo.toml
+│   └── tauri.conf.json
+├── assets
+│   ├── expand.png
+│   └── collapse.png
+├── Cargo.toml
+└── plugins.txt
+
