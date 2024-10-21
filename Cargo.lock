@@ -1891,6 +1891,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_impl"
+version = "0.1.0"
+dependencies = [
+ "app_core",
+ "crossbeam-channel",
+ "eframe 0.22.0",
+ "egui 0.22.0",
+ "serde",
+ "serde_json",
+ "tauri-build",
+]
+
+[[package]]
 name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7104,6 +7117,20 @@ dependencies = [
  "raw-window-handle 0.6.2",
  "windows-sys 0.59.0",
  "windows-version",
+]
+
+[[package]]
+name = "window_management"
+version = "0.1.0"
+dependencies = [
+ "app_core",
+ "crossbeam-channel",
+ "eframe 0.22.0",
+ "egui 0.22.0",
+ "egui_impl",
+ "serde",
+ "serde_json",
+ "tauri-build",
 ]
 
 [[package]]

@@ -1,0 +1,1 @@
+target/debug/libwindow_management.dylib

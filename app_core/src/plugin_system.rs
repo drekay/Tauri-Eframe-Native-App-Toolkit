@@ -1,9 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path, sync::Arc};
 use crate::{message_bus::MessageBus, Message, Plugin, UIPlugin};
 use eframe::{egui, App};
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use libloading::{Library, Symbol};
 pub struct PluginSystem {
-    plugins: HashMap<String, Box<dyn Plugin>>,
+    //plugins: HashMap<String, Box<dyn Plugin>>,
+    plugins: HashMap<String, (Box<dyn Plugin>, Arc<Library>)>,
     ui_plugins: HashMap<String, Box<dyn UIPlugin>>,
     message_bus: MessageBus,
     response_sender: Sender<Message>,
@@ -22,23 +24,39 @@ impl PluginSystem {
         }
     }
 
+    pub fn load_plugin(&mut self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
+        let path = path.as_ref();
+        let lib = unsafe { Library::new(path)? };
+        //let lib = Arc::new(unsafe { Library::new(path)? });
+        let constructor: Symbol<fn() -> Box<dyn Plugin>> = unsafe { lib.get(b"create_plugin")? };
+        let mut plugin = constructor();
+        let name = plugin.name().to_string();
+        plugin.on_load();
+
+        self.plugins.insert(name, (plugin, lib.into()));
+        Ok(())
+    }
+
+    /* no need?
     pub fn add_plugin(&mut self, plugin: Box<dyn Plugin>) {
         let name = plugin.name().to_string();
         self.plugins.insert(name, plugin);
-    }
+    }*/
 
     pub fn add_ui_plugin(&mut self, plugin: Box<dyn UIPlugin>) {
         let name = plugin.name().to_string();
         self.ui_plugins.insert(name, plugin);
     }
 
-    pub fn update_all(&mut self, ctx: &egui::Context) {
+     pub fn update_all(&mut self, ctx: &egui::Context) {
         let mut deferred_messages = Vec::new();
 
+        //println!("Plugin-system update_all ...");
+
         // Update regular plugins
-        for (_, plugin) in &mut self.plugins {
-         //   plugin.update(ctx, &self.message_bus.receiver, &self.response_sender);
-        }
+    for (_, (plugin, _)) in &mut self.plugins {
+        plugin.update(ctx, &self.message_bus.receiver, &self.response_sender);
+    }
 
         // Update UI plugins
         for (_, ui_plugin) in &mut self.ui_plugins {

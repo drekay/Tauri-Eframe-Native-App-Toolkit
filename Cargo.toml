@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "app_core",
-
+    "plugins/window_management",
     "app_main",
     "src-tauri"
 ]
