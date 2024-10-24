@@ -6,7 +6,7 @@ pub use components::frame::Frame;
 // Rename our local Window to avoid conflict
 pub use components::window::Window as EguiWindow;
 
-use app_core::ui::{Window as CoreWindow, WindowResponse as CoreWindowResponse};
+use app_core::{messages::ComponentInteraction, ui::{Window as CoreWindow, WindowResponse as CoreWindowResponse}};
 use eframe::egui;
 
 // Define the EguiWindowTrait instead of EguiWindow to avoid naming conflicts
@@ -20,6 +20,7 @@ pub struct EguiWindowResponse {
     pub drag_started: bool,
     pub drag_released: bool,
     pub drag_delta: egui::Vec2,
+    pub component_interactions: Vec<ComponentInteraction>,
 }
 
 #[no_mangle]

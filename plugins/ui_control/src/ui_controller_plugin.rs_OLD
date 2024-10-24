@@ -2,7 +2,6 @@ use eframe::egui;
 use crossbeam_channel::{Sender, Receiver};
 use std::sync::{Arc, Mutex};
 
-//use crate::plugins::window_management::window_plugin::{Message, Plugin, UIPlugin,WindowPluginMessage};
 use crate::{plugins::window_management::WindowState, Message, Plugin, UIPlugin, WindowPluginMessage};
 
 pub(crate)  struct UiControllerPlugin {
@@ -11,7 +10,7 @@ pub(crate)  struct UiControllerPlugin {
     rx: Receiver<Message>,
 }
 
-impl UiControllerPlugin {
+impl UiControllerPlugin_OLD {
     pub fn new(tx: Sender<Message>, rx: Receiver<Message>, state: Arc<Mutex<WindowState>>) -> Self {
         Self {
             state,
@@ -102,9 +101,9 @@ impl UiControllerPlugin {
     }
 }
 
-impl Plugin for UiControllerPlugin {
+impl Plugin for UiControllerPlugin_OLD {
     fn name(&self) -> &str {
-        "UiControllerPlugin"
+        "UiControllerPlugin_OLD"
     }
 
     fn update(&mut self, ctx: &egui::Context, _rx: &Receiver<Message>, _tx: &Sender<Message>) {

@@ -8,7 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     eframe::run_native(
         "Tauri EFrame Native Demo",
         options,
-        Box::new(|cc|  Box::new(TauriEframeNativeApp::new(cc))),
+        Box::new(|cc|  Ok(Box::new(TauriEframeNativeApp::new(cc)))),
     )?;
   
     Ok(())

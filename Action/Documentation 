@@ -1,0 +1,6 @@
+Documentation ident_case
+ WindowControllerPlugin works with the WindowPlugin (Master Plugin). The WindowControllerPlugin handles messages and rendering related to the UIViewPlugin.
+
+ Great. Now go step by step to add this to our codebase.
+Remember to use generalisations as we are making a toolkit for anyone wishing to build a high performing dynamic plugin system.
+

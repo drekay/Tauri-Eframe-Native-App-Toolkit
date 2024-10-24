@@ -1,4 +1,4 @@
-// egui_impl/src/components/window.rs
+//egui_impl/src/components/window.rs
 
 use eframe::egui;
 use crate::{EguiWindowTrait, EguiWindowResponse};
@@ -63,6 +63,7 @@ impl CoreWindow for Window {
             drag_started: false,
             drag_released: false,
             drag_delta: egui::Vec2::ZERO,
+            component_interactions: Vec::new(),
         };
     
         egui::Area::new(egui::Id::new(self.id))
@@ -113,6 +114,7 @@ impl EguiWindowTrait for Window {
                 drag_started: false,
                 drag_released: false,
                 drag_delta: egui::Vec2::ZERO,
+                component_interactions: Vec::new(),
             };
         }
 
@@ -156,6 +158,7 @@ impl EguiWindowTrait for Window {
                 drag_started,
                 drag_released,
                 drag_delta,
+                component_interactions: Vec::new(),
             }
         } else {
             EguiWindowResponse {
@@ -168,6 +171,7 @@ impl EguiWindowTrait for Window {
                 drag_started: false,
                 drag_released: false,
                 drag_delta: egui::Vec2::ZERO,
+                component_interactions: Vec::new(),
             }
         }
     }

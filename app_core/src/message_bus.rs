@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
 
-use crate::Message;
+use crate::messages::Message;
 
+
+#[derive(Debug, Clone)]
 pub struct MessageBus {
     pub senders: HashMap<String, Sender<Message>>,
     pub receiver: Receiver<Message>,

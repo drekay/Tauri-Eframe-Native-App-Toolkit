@@ -1,4 +1,11 @@
 //plugins/ui_controller/src/lib.rs
+
+//addback mod ui_controller_plugin;
+//use ui_control::{UIControllerPlugin};
+
+mod ui_view_plugin;
+pub use ui_view_plugin::UIViewPlugin;
+/* 
 mod ui_controller_plugin;
 
 use app_core::Plugin;
@@ -34,3 +41,4 @@ pub fn create_plugin() -> Box<dyn Plugin> {
         controller: ui_controller_plugin::UiController::new(),
     })
 }
+*/

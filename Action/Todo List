@@ -1,17 +1,21 @@
 Todo:
+[x] Completed [-] Removed/deprecated [*] Recursive [?] Unclear or Maybe [+] Add or Enhance
+[&] Merge [!] Research [=] Same As [ ] UnAssigned [WIP] Current Work 
 
 [x] Setup Obs & Connect to Twitch 
-[x] Do daily Twitch Streaming
+[*] Do daily Twitch Streaming
 [x] Create a cool wall paper for Twitch Channel
-[ ] Show old implementation demo - if Anyone asks
+[*] Show old implementation demo - if Anyone asks
 [x] Work on CoreWindow and EguiWindow
-[WIP] Make application run without loading any plugins
-[ ] Fix WindowPlugin and WindowController plugins
-[ ] Fix UIController Plugin
+[x] Make application run without loading any plugins
+[x] How to build individual plugins - WindowPlugin - create [dylib], dll, dso - tested on Mac Only
+[x] Fix WindowPlugin to load as plugin
+[x] Make application load dynamic library plugin - WindowPlugin
+[WIP] Change Plugins to Strict API Plugins
+[WIP] Refactor Plugin_system.rs
 
-[ ] How to build individual plugins - WindowPlugin - create [dylib], dll, dso 
-[ ] Refactor Plugin_system.rs
-[ ] Make application load dynamic library plugin - WindowPlugin
+[ ] WindowController plugins
+[ ] Fix UIController Plugin
 [ ] Refactor UIController Plugin to work with the new dynamic plugin_system.rs
 [ ] Refactor Message Bus System  
 [ ] 
@@ -70,3 +74,17 @@ Hi there!
 ├── Cargo.toml
 └── plugins.txt
 
+
+Welcome and feel free to ask any questions. 
+
+I am building a toolkit to enable people build high performing desktop applications easily.
+
+Thanks for following.
+
+I am building a toolkit to enable people build high performing desktop applications easily.
+
+For your DAW-like application, you could further extend this by:
+Using a thread pool for managing multiple background tasks
+Implementing priority queues for different types of messages (e.g., audio processing vs. UI updates)
+Adding a mechanism to cancel or modify ongoing background tasks as needed
+This combined 
