@@ -1,118 +1,86 @@
-// plugins/window_management/window_controller_plugin.rs
-use std::collections::HashMap;
-use crossbeam_channel::{Receiver, Sender};
-use eframe::egui;
-use crate::{Message, Plugin, UIPlugin};
+use app_core::{MessageHandler, UIPlugin};
+use crossbeam_channel::Sender;
+use crate::{Message, Plugin};
 
 pub struct WindowControllerPlugin {
-    receiver: Option<Receiver<Message>>,
     tx: Sender<Message>,
-    window_metadata: HashMap<usize, WindowMetadata>,
-    name: String,
-}
-
-struct WindowMetadata {
-    needs_verification: bool,
-    associated_plugins: Vec<String>,
 }
 
 impl WindowControllerPlugin {
-    pub fn new(tx: Sender<Message>, rx: Receiver<Message>) -> Self {
-        Self {
-            name: "WindowController".to_string(),
-            receiver: None,
-            tx,
-            window_metadata: HashMap::new(),
-        }
+    pub fn new(tx: Sender<Message>) -> Self {
+        Self { tx }
     }
 
-    pub fn add_window_metadata(&mut self, index: usize, metadata: WindowMetadata) {
-        self.window_metadata.insert(index, metadata);
-    }
-
-    fn verify_close(&self, index: usize) -> bool {
-        // Implement verification logic
-        if let Some(metadata) = self.window_metadata.get(&index) {
-            if metadata.needs_verification {
-                // Implement verification logic here
-                // For now, always return true
-                true
-            } else {
-                true
-            }
-        } else {
-            true
-        }
-    }
-
-    fn inform_associated_plugins(&self, index: usize) {
-        if let Some(metadata) = self.window_metadata.get(&index) {
-            for plugin in &metadata.associated_plugins {
-                // Implement logic to inform associated plugins
-                println!("Informing plugin {} about window {} closing", plugin, index);
-            }
+    fn handle_ui_view_message(&self, message: UIViewPluginMessage) {
+        match message {
+            UIViewPluginMessage::WindowInteraction(window_id, interaction) => {
+                match interaction {
+                    WindowInteraction::Close => {
+                        self.tx.send(Message::WindowPlugin(WindowPluginMessage::ConfirmedCloseWindow(window_id))).unwrap();
+                    },
+                    WindowInteraction::Minimize => {
+                        self.tx.send(Message::WindowPlugin(WindowPluginMessage::MinimizeWindow(window_id))).unwrap();
+                    },
+                    WindowInteraction::Drag(pos) => {
+                        self.tx.send(Message::WindowPlugin(WindowPluginMessage::DragWindowMove(pos))).unwrap();
+                    },
+                    // Handle other interactions...
+                }
+            },
+            // Handle other UIViewPlugin messages...
         }
     }
 }
 
 impl Plugin for WindowControllerPlugin {
-    fn update(&mut self, ctx: &egui::Context, rx: &Receiver<Message>, tx: &Sender<Message>) {
-        // Process incoming messages
-        while let Ok(message) = rx.try_recv() {
-        //    self.handle_message(message, tx);
-        println!("WindowControllerPlugin update");
-        }
-    }
-    
     fn name(&self) -> &str {
         "WindowControllerPlugin"
     }
 
-   /* fn update(&self) {
-       //println!("windowcontroller update");
-      
-       if let Some(receiver) = &self.receiver {
-        while let Ok(message) = receiver.try_recv() {
+    fn update(&mut self, ctx: &egui::Context, message_handler: &mut dyn MessageHandler) {
+        while let Some(message) = message_handler.receive_message() {
             match message {
-                Message::CloseWindow(index) => {
-                   // Why this this message not being picked up here?
-                    println!("windowcontroller CloseWindow");
-                    if self.verify_close(index) {
-                        self.inform_associated_plugins(index);
-                        // Send message to AboutWindowPlugin to actually close the window
-                        self.tx.send(Message::ConfirmedCloseWindow(index)).unwrap();
-                    }
+                Message::UIViewPlugin(ui_message) => self.handle_ui_view_message(ui_message),
+                Message::WindowPlugin(window_message) => {
+                    // Handle any responses from WindowPlugin if necessary
                 },
-                    // Handle other messages...
-                    _ => { println!("Received unhandled message")},
-                }
+                // Handle other relevant message types...
+                _ => {} // Ignore messages not relevant to this plugin
             }
         }
-    }  
- 
-    fn execute(&self, ui: &mut eframe::egui::Ui, ctx: &eframe::egui::Context) {
-        //todo!()
+    }
+
+    fn on_load(&mut self) {
+        // Initialization logic
+    }
+
+    fn on_unload(&mut self) {
+        // Cleanup logic
     }
     
-    fn handle_message(&self, message: Message) {
-        //todo!()
+    fn plugin_type(&self) -> app_core::PluginType {
+        todo!()
     }
     
-    fn is_dragging(&self) -> bool {
-        false
+    fn controller(&self) -> Option<&str> {
+        todo!()
     }
     
-    fn name(&self) -> &str {
-        &self.name
+    fn is_enabled(&self) -> bool {
+        todo!()
     }
     
-    fn set_receiver(&mut self, rx: Receiver<Message>) {
-        self.receiver = Some(rx);  // Set the receiver when the plugin is registered
-    }*/
+    fn set_enabled(&mut self, enabled: bool) {
+        todo!()
+    }
+    
+    fn handle_message(&mut self, message: Message, message_handler: &mut dyn app_core::MessageHandler) {
+        todo!()
+    }
 }
 
 impl UIPlugin for WindowControllerPlugin {
     fn update_ui(&mut self, ctx: &egui::Context) {
-        todo!()
+        // This plugin doesn't directly update UI
     }
 }

@@ -1,15 +1,17 @@
 //plugins/window_management/src/lib.rs
 mod window_plugin;
-//addback mod window_controller;
+mod window_controller_plugin;
 
 use crossbeam_channel::{Receiver, Sender};
 pub use window_plugin::WindowPlugin;
-use app_core::{Message, Plugin};
+pub use window_controller_plugin::WindowControllerPlugin;
+use app_core::{messages::Message, Plugin};
+use egui_impl::EguiWindow;
 use eframe::egui;
 
 pub struct WindowManagementPlugin {
     window_plugin: window_plugin::WindowPlugin,
-   //addback window_controller: window_controller::WindowController,
+   window_controller: window_controller_plugin::WindowControllerPlugin,
 }
 
 impl Plugin for WindowManagementPlugin {
@@ -29,10 +31,33 @@ impl Plugin for WindowManagementPlugin {
        //addback  self.window_controller.on_unload();
     }
 
-    fn update(&mut self, ctx: &egui::Context, rx: &Receiver<Message>, tx: &Sender<Message>) {
-       // self.window_plugin.update(ctx);
-       //addback  self.window_controller.update(ctx);
+
+    
+    fn plugin_type(&self) -> app_core::PluginType {
+        todo!()
     }
+    
+    fn controller(&self) -> Option<&str> {
+        todo!()
+    }
+    
+    fn is_enabled(&self) -> bool {
+        todo!()
+    }
+    
+    fn set_enabled(&mut self, enabled: bool) {
+        todo!()
+    }
+    
+    fn handle_message(&mut self, message: Message, message_handler: &mut dyn app_core::MessageHandler) {
+        todo!()
+    }
+    
+    fn update(&mut self, ctx: &egui::Context, message_handler: &mut dyn app_core::MessageHandler) {
+       // self.window_plugin.update(ctx);
+        //addback  self.window_controller.update(ctx);
+    }
+
 }
 
 #[no_mangle]
