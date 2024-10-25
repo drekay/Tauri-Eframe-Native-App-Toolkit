@@ -6,6 +6,8 @@ pub mod message_priority;
 pub mod message_handler;
 pub mod messages;
 pub mod priority_message_handler;
+pub mod my_concrete_filter;
+pub mod sys_filters;
 
 use crossbeam_channel:: {Sender, Receiver};
 use eframe::egui;
@@ -105,5 +107,7 @@ pub use plugin_system::PluginSystem;
 pub use message_handler::MessageHandler;
 pub use message_priority::Priority;
 pub use priority_message_handler::PrioritizedMessage;
+pub use my_concrete_filter::MyConcreteFilter;
+pub use sys_filters::*;
 pub use ui::Window;
 pub use ui::WindowResponse;

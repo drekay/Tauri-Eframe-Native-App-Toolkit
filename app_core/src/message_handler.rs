@@ -20,7 +20,6 @@ pub trait MessageHandler: Send + Sync {
     fn send_message(&self, message: Message) -> Result<(), SendError<Message>>;
     fn receive_message(&mut self) -> Option<Message>;
     fn receive_message_with_priority(&mut self, min_priority: Priority) -> Option<Message>;
-    //fn filter_messages(&mut self, filter: &dyn MessageFilter);
     fn filter_messages(&mut self, filter: Box<dyn MessageFilter + Send + Sync>) ;
 }
 ////

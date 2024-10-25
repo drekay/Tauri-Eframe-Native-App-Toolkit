@@ -1,6 +1,8 @@
 use std::fmt;
 
-#[derive(Debug, Clone)]
+use crate::Priority;
+
+/*#[derive(Debug, Clone)]
 pub enum Message {
     Broadcast(String),
     WindowPlugin(WindowPluginMessage),
@@ -11,6 +13,42 @@ pub enum Message {
     PluginControl(PluginControlMessage), 
     ControllerPlugin(ControllerPluginMessage),
     CriticalData(CriticalDataPayload),
+}*/
+#[derive(Debug, Clone)]
+pub enum Message {
+    Broadcast {
+        content: String,
+        priority: Priority,
+    },
+    WindowPlugin {
+        message: WindowPluginMessage,
+        priority: Priority,
+    },
+    WindowControllerPlugin {
+        message: WindowControllerPluginMessage,
+        priority: Priority,
+    },
+    Sample {
+        message: SampleMessage,
+        priority: Priority,
+    },
+    Menu {
+        message: MenuMessage,
+        priority: Priority,
+    },
+    System {
+        message: SystemMessage,
+        priority: Priority,
+    },
+    PluginControl {
+        message: PluginControlMessage,
+        priority: Priority,
+    },
+    ControllerPlugin {
+        message: ControllerPluginMessage,
+        priority: Priority,
+    },
+    CriticalData(CriticalDataPayload), // Assuming CriticalData always has high priority
 }
 
 #[derive(Debug, Clone)]

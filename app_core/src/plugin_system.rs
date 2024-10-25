@@ -26,9 +26,6 @@ impl PluginSystem {
             response_receiver,
 
             //To be continued after filter+handler work ...
-            mismatched types
-expected struct `Arc<std::sync::Mutex<HashMap<String, crossbeam_channel::Sender<Message>>>>` for message_bus.senders,
-            
             message_handler: Box::new(DefaultMessageHandler::new(
                 message_bus.senders,
                 message_bus.receiver
@@ -47,10 +44,8 @@ expected struct `Arc<std::sync::Mutex<HashMap<String, crossbeam_channel::Sender<
         self.plugins.insert(name, (plugin, lib.into()));
         Ok(())
     }
-
   
-  
-      fn handle_system_message(&mut self, message: Message) {
+    fn handle_system_message(&mut self, message: Message) {
         match message {
             Message::System(system_message) => {
                 match system_message {
