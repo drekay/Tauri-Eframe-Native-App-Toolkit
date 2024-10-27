@@ -1,10 +1,11 @@
 //plugins/window_management/src/lib.rs
 mod window_plugin;
 mod window_controller_plugin;
+mod window_controller_messages;
 
 use crossbeam_channel::{Receiver, Sender};
 pub use window_plugin::WindowPlugin;
-pub use window_controller_plugin::WindowControllerPlugin;
+pub use window_controller_plugin::{WindowControllerPlugin, ControllerSettings};
 use app_core::{messages::Message, Plugin};
 use egui_impl::EguiWindow;
 use eframe::egui;
@@ -46,10 +47,6 @@ impl Plugin for WindowManagementPlugin {
     }
     
     fn set_enabled(&mut self, enabled: bool) {
-        todo!()
-    }
-    
-    fn handle_message(&mut self, message: Message, message_handler: &mut dyn app_core::MessageHandler) {
         todo!()
     }
     

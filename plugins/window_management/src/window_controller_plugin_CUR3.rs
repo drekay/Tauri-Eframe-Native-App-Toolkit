@@ -11,7 +11,7 @@ use eframe::egui;
 use crossbeam_queue::ArrayQueue; 
 
 pub struct WindowControllerPluginState {
-    message_filters: Arc<ArrayQueue<Box<dyn MessageFilter + Send + Sync>>>,
+    message_filters: Vec<Box<dyn MessageFilter + Send + Sync>>,
     settings: Arc<RwLock<ControllerSettings>>,
     filtered_out_sender: Sender<Message>,
     message_queue: Arc<ArrayQueue<PrioritizedMessage>>,
@@ -21,7 +21,6 @@ pub struct WindowControllerPluginState {
 pub struct WindowControllerPlugin {
     message_handlers: HashMap<PluginType, PluginMessageHandler>,
     mutable_state: Arc<RwLock<WindowControllerPluginState>>,
-    manifest: PluginManifest, 
 }
 
 pub struct ControllerSettings {
@@ -37,8 +36,6 @@ impl Plugin for WindowControllerPlugin {
 
     fn update(&mut self, ctx: &egui::Context, message_handler: &mut dyn MessageHandler) {
         while let Some(message) = message_handler.receive_message() {
-            //Handle controller specif messages here
-
             let should_process = {
                 let state = self.mutable_state.read().unwrap();
                 state.message_filters.iter().all(|filter| filter.filter(&message))
@@ -89,35 +86,20 @@ impl Plugin for WindowControllerPlugin {
 }
 
 impl WindowControllerPlugin {
-    pub fn update_controller(&mut self, new_controller_id: String) {
-        let mut state = self.mutable_state.write().unwrap();
-        state.manifest.controller_id = new_controller_id.clone();
-        
-        // Update the DynamicMessageFilter
-        state.message_filters = vec![Box::new(DynamicMessageFilter::new(new_controller_id))];
-        
-        // You might want to notify other parts of your system about this change
-        // For example, sending a message to update UI or other plugins
-        let _ = state.filtered_out_sender.send(Message::ControllerUpdated(new_controller_id));
-    }
-
-    pub fn new(filtered_out_sender: Sender<Message>, manifest: PluginManifest) -> Self {
-        let dynamic_filter = Box::new(DynamicMessageFilter::new(manifest.controller_id.clone()));
+    pub fn new(filtered_out_sender: Sender<Message>) -> Self {
         let mutable_state = WindowControllerPluginState {
-            message_filters: Arc::new(ArrayQueue::new(10)), // Adjust capacity as needed
-            //vec![Box::new(DynamicMessageFilter::new(manifest.controller_id.clone()))],
+            message_filters: Vec::new(),
             settings: Arc::new(RwLock::new(ControllerSettings {
                 active_handlers: HashSet::new(),
             })),
             filtered_out_sender,
-            message_queue: Arc::new(ArrayQueue::new(1024)),
-            messages_to_process: Arc::new(ArrayQueue::new(1024)),
+            message_queue: Arc::new(ArrayQueue::new(1024)), // Adjust capacity as needed
+            messages_to_process: Arc::new(ArrayQueue::new(1024)), // Adjust capacity as needed
         };
 
         Self {
             message_handlers: HashMap::new(),
             mutable_state: Arc::new(RwLock::new(mutable_state)),
-            manifest,  // Store the manifest in the plugin
         }
     }
 
@@ -138,23 +120,17 @@ impl WindowControllerPlugin {
     }
 
     fn process_messages(&mut self) {
-        let messages_to_process = ArrayQueue::new(1024);
+        let messages_to_process = ArrayQueue::new(1024); // Adjust capacity as needed
         {
             let state = self.mutable_state.read().unwrap();
             while let Some(PrioritizedMessage(message)) = state.message_queue.pop() {
-                // Apply the DynamicMessageFilter
-                if state.message_filters.iter().all(|filter| filter.filter(&message)) {
-                    if messages_to_process.push(message).is_err() {
-                        eprintln!("messages_to_process queue is full, dropping message");
-                        break;
-                    }
-                } else {
-                    // Message filtered out, send to filtered_out_sender
-                    let _ = state.filtered_out_sender.send(Message::FilteredOut(Box::new(message)));
+                if messages_to_process.push(message).is_err() {
+                    eprintln!("messages_to_process queue is full, dropping message");
+                    break;
                 }
             }
         }
-    
+
         while let Some(message) = messages_to_process.pop() {
             let plugin_type = message.plugin_type();
             if let Some(handler) = self.message_handlers.get(&plugin_type) {
@@ -197,8 +173,6 @@ impl WindowControllerPlugin {
                 //addback let _ = self.filtered_out_sender.send(message.clone());
                 None
             },
-            Message::ControllerUpdated(_) => todo!(),
-            Message::FilteredOut(plugin_message) => todo!(),
         }
     }
  
