@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{collections::HashMap, path::Path, sync::{Arc, Mutex}};
 use crate::{message_bus::MessageBus, message_handler::DefaultMessageHandler, messages::{Message, PluginControlMessage, SystemMessage}, MessageHandler, Plugin, UIPlugin};
 use eframe::{egui, App};
 use crossbeam_channel::{unbounded, Receiver, Sender};
@@ -24,10 +24,8 @@ impl PluginSystem {
             message_bus: message_bus.clone(),
             response_sender,
             response_receiver,
-
-            //To be continued after filter+handler work ...
             message_handler: Box::new(DefaultMessageHandler::new(
-                message_bus.senders,
+                Arc::new(Mutex::new(message_bus.senders)),
                 message_bus.receiver
             )),
         }
@@ -46,7 +44,8 @@ impl PluginSystem {
     }
   
     fn handle_system_message(&mut self, message: Message) {
-        match message {
+     /* ADDBACK 
+       match message {
             Message::System(system_message) => {
                 match system_message {
                     SystemMessage::ShutdownPlugin(plugin_name) => {
@@ -95,6 +94,8 @@ impl PluginSystem {
                 self.forward_to_controller(message);
             }
         }
+   
+   */
     }
 
     fn forward_to_controller(&mut self, message: Message) {

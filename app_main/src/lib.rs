@@ -31,9 +31,11 @@ impl TauriEframeNativeApp {
 impl eframe::App for TauriEframeNativeApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Update all plugins
-        self.plugin_system.update_all(ctx);
+        
+        //ADDBACK self.plugin_system.update_all(ctx);
 
-        // Add a button to create new windows
+        //Todo: this should not be rendered here
+        // Add a button to create new windows 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             if ui.button("Add Window").clicked() {
              //addback   self.plugin_system.send_message("WindowPlugin", app_core::Message::WindowPlugin(app_core::WindowPluginMessage::AddWindow));

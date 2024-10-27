@@ -1,6 +1,6 @@
 Todo:
 [x] Completed [-] Removed/deprecated [*] Recursive [?] Unclear or Maybe [+] Add or Enhance
-[&] Merge [!] Research [=] Same As [ ] UnAssigned [WIP] Current Work 
+[&] Merge [!] Research [=] Same As [ ] UnAssigned [WIP] Current Work [TODO] Todo ASAP
 
 [x] Setup Obs & Connect to Twitch 
 [*] Do daily Twitch Streaming
@@ -11,18 +11,17 @@ Todo:
 [x] How to build individual plugins - WindowPlugin - create [dylib], dll, dso - tested on Mac Only
 [x] Fix WindowPlugin to load as plugin
 [x] Make application load dynamic library plugin - WindowPlugin
-[WIP] Change Plugins to Strict API Plugins
-[WIP] Refactor Plugin_system.rs
+[x] Change Plugins to Strict API Plugins
 
-[ ] WindowController plugins
+[WIP] Refactor Message struct for Dynamic Controller Plugins
+[WIP] WindowController plugins
+[TODO] Git Commit
+[ ] Refactor Plugin_system.rs
+[ ] Refactor Message Bus System  
 [ ] Fix UIController Plugin
 [ ] Refactor UIController Plugin to work with the new dynamic plugin_system.rs
-[ ] Refactor Message Bus System  
-[ ] 
-[ ] 
 [ ] 
 
-[ ] Git Commit
 [ ] Add Drag & Drop code in Frame.rs
 [ ] Complete Window Messages and Responses
 [ ] Prompting system - closing window (Y/N)

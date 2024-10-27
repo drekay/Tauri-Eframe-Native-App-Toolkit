@@ -8,13 +8,10 @@ pub mod messages;
 pub mod priority_message_handler;
 pub mod my_concrete_filter;
 pub mod sys_filters;
-use std::hash::Hash;
 
 use crossbeam_channel:: {Sender, Receiver};
 use eframe::egui;
 use messages::Message;
-use serde::Deserialize;
-use serde::Serialize;
 use std::cmp::Ordering;
 
 pub trait Versioned {
@@ -71,7 +68,9 @@ pub trait Plugin: Send + Sync {
     fn controller(&self) -> Option<&str>;
     fn is_enabled(&self) -> bool;
     fn set_enabled(&mut self, enabled: bool);
+
     fn update(&mut self, ctx: &egui::Context, message_handler: &mut dyn MessageHandler);
+    fn handle_message(&mut self, message: Message, message_handler: &mut dyn MessageHandler);
     fn on_load(&mut self);
     fn on_unload(&mut self);
 }
@@ -86,6 +85,7 @@ pub trait MessageFilter: Send + Sync {
     fn filter(&self, message: &Message) -> bool;
 }*/
 
+
 pub trait MessageFilter: Send + Sync {
     fn filter(&self, message: &Message) -> bool;
     fn clone_box(&self) -> Box<dyn MessageFilter + Send + Sync>;
@@ -95,16 +95,6 @@ impl Clone for Box<dyn MessageFilter + Send + Sync> {
     fn clone(&self) -> Self {
         self.clone_box()
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash,Serialize, Deserialize)]
-pub enum PluginType {
-UI,
-Audio,
-Data,
-Window,
-WindowController,
-// Add other types as needed
 }
 
 pub use plugin_system::PluginSystem;

@@ -1,51 +1,6 @@
-
 use std::fmt;
-use std::any::Any;
-use std::sync::Arc;
-use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    Broadcast {
-        content: String,
-        priority: Priority,
-    },
-    Plugin {
-        plugin_type: PluginType,
-        message: Arc<dyn Any + Send + Sync>,
-        priority: Priority,
-    },
-    ControllerMessage {
-        target_controller_id: String,
-        content: Arc<dyn Any + Send + Sync>,
-        priority: Priority,
-    },
-    CriticalData(Arc<dyn Any + Send + Sync>),
-    Custom(Arc<dyn Any + Send + Sync>),
-    ControllerUpdated(String),
-}
-
-impl Message {
-    pub fn get_target_controller_id(&self) -> Option<&str> {
-        match self {
-            Message::Broadcast { .. } => None,
-            Message::Plugin { .. } => None,
-            Message::ControllerMessage { target_controller_id, .. } => Some(target_controller_id),
-            Message::CriticalData(_) => None,
-            Message::Custom(_) => None,
-            Message::ControllerUpdated(_) => None,
-        }
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize)]
-pub struct PluginManifest {
-    pub name: String,
-    pub version: String,
-    pub controller_id: String,
-    pub dependencies: Vec<String>,
-    pub config_options: HashMap<String, String>,
-}
+use crate::Priority;
 
 /*#[derive(Debug, Clone)]
 pub enum Message {
@@ -59,8 +14,6 @@ pub enum Message {
     ControllerPlugin(ControllerPluginMessage),
     CriticalData(CriticalDataPayload),
 }*/
-
-/* 
 #[derive(Debug, Clone)]
 pub enum Message {
     Broadcast {
@@ -96,7 +49,7 @@ pub enum Message {
         priority: Priority,
     },
     CriticalData(CriticalDataPayload), // Assuming CriticalData always has high priority
-}*/
+}
 
 #[derive(Debug, Clone)]
 pub enum WindowPluginMessage {
@@ -109,12 +62,11 @@ pub enum WindowPluginMessage {
     CollapseWindow(usize),
 }
 
-/* deleted
 #[derive(Debug, Clone)]
 pub enum WindowControllerPluginMessage {
     CloseWindow(usize),
     // Add other window controller messages
-}*/
+}
 
 //oher system messages
 #[derive(Clone, Debug)]
@@ -229,50 +181,4 @@ pub enum ComponentInteraction {
 #[derive(Debug, Clone)]
 pub struct CriticalDataPayload {
     // Define fields as needed
-}
-///////////////////////////////////////
-
-pub trait PluginMessage: Send + Sync {
-    fn priority(&self) -> Priority;
-    fn plugin_type(&self) -> PluginType;
-}
-
-impl PluginMessage for WindowPluginMessage {
-    fn priority(&self) -> Priority {
-        self.priority()
-    }
-
-    fn plugin_type(&self) -> PluginType {
-        PluginType::Window
-    }
-}
-
-// Implement for other message types (AudioPluginMessage, etc.)
-
-use std::cmp::{Ord, PartialOrd, Ordering};
-
-use serde::{Deserialize, Serialize};
-
-use crate::{MessageFilter, PluginType, Priority};
-
-struct PrioritizedMessage(Box<dyn PluginMessage>);
-
-impl PartialEq for PrioritizedMessage {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.priority() == other.0.priority()
-    }
-}
-
-impl Eq for PrioritizedMessage {}
-
-impl PartialOrd for PrioritizedMessage {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.0.priority().cmp(&other.0.priority()))
-    }
-}
-
-impl Ord for PrioritizedMessage {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.0.priority().cmp(&other.0.priority())
-    }
 }
