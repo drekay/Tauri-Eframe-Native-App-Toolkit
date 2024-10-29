@@ -1,6 +1,6 @@
 # Tauri Eframe Native App Toolkit
 
-A toolkit for creating native applications using Tauri and Eframe, with a focus on producing cross-platform desktop applications with a great native experience.
+A toolkit for creating native applications using Tauri and Eframe, with a focus on producing high-performance and fast cross-platform desktop applications with a great native experience.
 
 # NB: This is still EXPERIMENTAL and UNDER DEVELOPMENT!!
 
