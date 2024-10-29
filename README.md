@@ -22,6 +22,35 @@ A toolkit for creating native applications using Tauri and Eframe, with a focus 
 
 The goal of this toolkit is to enable developers to produce cross-platform desktop applications that offer a seamless and native user experience. By leveraging the power of Tauri and Eframe, developers can build applications that are both lightweight and performant. The new Plugin Architecture allows for more flexible and maintainable code.
 
+## Architecture
+## C1 Diagram
+
+```mermaid
+graph TD
+    style MainApp fill:#003366,stroke:#333,stroke-width:2px;
+    classDef default fill:#003366,stroke:#333,stroke-width:2px,color:#ffffff,font-weight:bold;
+
+    WindowControl[Window Control Plugin]
+    UIView[UI View Plugin]
+    Window[Window]
+    MenuPlugin[Menu Plugin]
+    MainApp[Main Application Window]
+    
+    WindowControl -->|Provides window control functionality| MainApp
+    UIView -->|Renders user interface| MainApp
+    Window -->|Manages window display| MainApp
+    MenuPlugin -->|Handles menu operations| MainApp
+
+    MasterPlugin[MasterPlugin] -->|Manages overall application| MainApp
+    
+    MainApp -->|Contains and manages| ChildPlugins[Child Plugins]
+    ChildPlugins -->|Handles background tasks| BackgroundPlugin[Background Plugin]
+    ChildPlugins -->|Manages additional window features| WindowPlugin[Window Plugin]
+    ChildPlugins -->|Wraps window functionality| WindowWrapper[Window Wrapper]
+
+    %% Apply the default class to all nodes for styling
+    class WindowControl,UIView,Window,MenuPlugin,MainApp,MasterPlugin,ChildPlugins,BackgroundPlugin,WindowPlugin,WindowWrapper default
+```
 ## Plugin Architecture
 
 The toolkit now uses a Plugin Architecture, which includes:
