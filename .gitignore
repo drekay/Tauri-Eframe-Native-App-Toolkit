@@ -1,3 +1,67 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+
+# Cargo.lock for libraries (uncomment if you're building an executable)
+# Cargo.lock
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-specific files
 .DS_Store
-target/
+Thumbs.db
+
+# Debug files
+*.pdb
+
+# Dependency directories
+/vendor/
+
+# Generated documentation
+/doc/
+
+# Environment variables
+.env
+
+# Backup files
+*.bak
+*.backup
+
+# Log files
+*.log
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled static libraries
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+
+# Rust profiling files
+*.profraw
+
+# Cargo config
+.cargo/config.toml
+
+# Ignore all .env files except .env.example
+.env*
+!.env.example
+
+# Ignore any local configuration files
+config.local.toml
+
+# Ignore any files or directories starting with '_'
+_*
+
 gen/schemas/

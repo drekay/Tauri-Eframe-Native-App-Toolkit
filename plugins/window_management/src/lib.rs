@@ -59,7 +59,7 @@ impl Plugin for WindowManagementPlugin {
 
 #[no_mangle]
 pub fn create_plugin(tx: Sender<Message>) -> Box<dyn Plugin> {
-    Box::new(WindowPlugin::new(tx)) //,
+    Box::new(WindowPlugin::new()) //, //addback
     //addback    window_controller: window_controller::WindowController::new(),
 
 }

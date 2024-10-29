@@ -6,10 +6,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WindowControllerPluginMessage {
+    RequestAddWindow,
     AddWindow {
         title: String,
         content: String,
         plugin_type: PluginType,
+    },
+    RequestCloseWindow {
+        window_id: usize,
     },
     CloseWindow {
         window_id: usize,
@@ -43,18 +47,9 @@ pub enum WindowControllerPluginMessage {
         new_content: String,
     },
     RequestWindowList,
-    WindowListResponse {
+    /*WindowListResponse {
         windows: Vec<WindowInfo>,
-    },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WindowInfo {
-    pub id: usize,
-    pub title: String,
-    pub plugin_type: PluginType,
-    pub is_minimized: bool,
-    pub position: (f32, f32),
+    },*/
 }
 
 impl WindowControllerPluginMessage {
@@ -77,11 +72,17 @@ impl PluginMessage for WindowControllerPluginMessage {
             WindowControllerPluginMessage::WindowClosed { .. } => Priority::Normal,
             WindowControllerPluginMessage::UpdateWindowContent { .. } => Priority::Normal,
             WindowControllerPluginMessage::RequestWindowList => Priority::Low,
-            WindowControllerPluginMessage::WindowListResponse { .. } => Priority::Low,
+            WindowControllerPluginMessage::RequestCloseWindow { window_id } => todo!(),
+            WindowControllerPluginMessage::RequestAddWindow => todo!(),
+         //   WindowControllerPluginMessage::WindowListResponse { .. } => Priority::Low,
         }
     }
 
     fn plugin_type(&self) -> PluginType {
         PluginType::WindowController
+    }
+    
+    fn as_any(&self) -> &dyn std::any::Any {
+        todo!()
     }
 }

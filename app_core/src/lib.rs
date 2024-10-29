@@ -111,7 +111,7 @@ pub use plugin_system::PluginSystem;
 pub use message_handler::MessageHandler;
 pub use message_priority::Priority;
 pub use priority_message_handler::PrioritizedMessage;
-pub use my_concrete_filter::MyConcreteFilter;
+//pub use my_concrete_filter::MyConcreteFilter;
 pub use sys_filters::*;
 pub use ui::Window;
 pub use ui::WindowResponse;

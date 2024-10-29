@@ -3,6 +3,7 @@ use std::fmt;
 use std::any::Any;
 use std::sync::Arc;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -10,30 +11,67 @@ pub enum Message {
         content: String,
         priority: Priority,
     },
-    Plugin {
-        plugin_type: PluginType,
-        message: Arc<dyn Any + Send + Sync>,
-        priority: Priority,
-    },
     ControllerMessage {
         target_controller_id: String,
+        content: ControllerMessage,
+        priority: Priority,
+    },
+    Plugin {
+        plugin_type: PluginType,
+        message:  Arc<dyn Any + Send + Sync>,
+        priority: Priority,
+    },
+    PluginSpecific {
+        content: Arc<dyn PluginMessage>,
+        priority: Priority,
+    },
+    Whatever {
         content: Arc<dyn Any + Send + Sync>,
         priority: Priority,
     },
-    CriticalData(Arc<dyn Any + Send + Sync>),
-    Custom(Arc<dyn Any + Send + Sync>),
-    ControllerUpdated(String),
+    ControllerUpdated {
+        controller_id: String,
+        priority: Priority,
+    },
+    CriticalData {
+        payload: Arc<dyn Any + Send + Sync>,
+        priority: Priority,
+    },
+    FilteredOut {
+        original_message: Box<Message>,
+        priority: Priority,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub enum ControllerMessage {
+    WindowController(WindowControllerMessage),
+    // Other controller types can be added here
+}
+
+#[derive(Debug, Clone)]
+pub enum WindowControllerMessage {
+    RequestCloseWindow {
+        window_index: usize,
+        priority: Priority,
+    },
+    RequestAddWindow {
+        priority: Priority,
+    },
+    // ... other window controller specific messages ...
 }
 
 impl Message {
     pub fn get_target_controller_id(&self) -> Option<&str> {
         match self {
             Message::Broadcast { .. } => None,
-            Message::Plugin { .. } => None,
             Message::ControllerMessage { target_controller_id, .. } => Some(target_controller_id),
-            Message::CriticalData(_) => None,
-            Message::Custom(_) => None,
-            Message::ControllerUpdated(_) => None,
+            Message::PluginSpecific { .. } => None,
+            Message::Whatever { .. } => None,
+            Message::ControllerUpdated { .. } => None,
+            Message::Plugin { plugin_type, message, priority } => todo!(),
+            Message::CriticalData { payload, priority } => todo!(),
+            Message::FilteredOut { original_message, priority } => todo!(),
         }
     }
 }
@@ -231,10 +269,11 @@ pub struct CriticalDataPayload {
     // Define fields as needed
 }
 ///////////////////////////////////////
-
-pub trait PluginMessage: Send + Sync {
+pub trait PluginMessage: Any + Send + Sync + Debug {
     fn priority(&self) -> Priority;
     fn plugin_type(&self) -> PluginType;
+    fn as_any(&self) -> &dyn Any;
+
 }
 
 impl PluginMessage for WindowPluginMessage {
@@ -244,6 +283,10 @@ impl PluginMessage for WindowPluginMessage {
 
     fn plugin_type(&self) -> PluginType {
         PluginType::Window
+    }
+
+    fn as_any(&self) -> &dyn Any where Self: Sized {
+        self
     }
 }
 

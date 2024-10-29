@@ -1,46 +1,45 @@
-//plugins/window_management/src/window_plugin.rs
 use eframe::egui;
-use crossbeam_channel::{Sender, Receiver};
 use std::sync::{Arc, Mutex};
-use app_core::{messages::{Message, WindowPluginMessage}, plugin_version, MessageHandler, Plugin, PluginType, PluginVersion, VersionComparable, VersionEquatable, Versioned};
+use app_core::{messages::{ControllerMessage, Message, WindowControllerMessage, WindowPluginMessage}, plugin_version, MessageHandler, Plugin, PluginType, PluginVersion, VersionComparable, VersionEquatable, Versioned};
 use egui_impl::EguiWindow as Window;
 
 pub struct WindowPlugin {
     state: Arc<Mutex<WindowState>>,
-    tx: Sender<Message>,
     version: PluginVersion,    
 }
+
 pub struct WindowState {
     pub windows: Vec<Window>,
     pub grid: Vec<usize>,
     pub about_counter: usize,
     pub expanded_height: f32,
     pub collapsed_height: f32,
-    pub sender: Sender<Message>,
 }
 
 impl WindowState {
-    pub fn new(sender: Sender<Message>) -> Self {
+    pub fn new() -> Self {
         Self {
             windows: Vec::new(),
             grid: Vec::new(),
             about_counter: 0,
             expanded_height: 100.0,
             collapsed_height: 30.0,
-            sender,
         }
     }
 }
 
 impl WindowPlugin {
-    pub fn new(tx: Sender<Message>) -> Self {
-        let state = Arc::new(Mutex::new(WindowState::new(tx.clone())));
+    pub fn new() -> Self {
+        let state = Arc::new(Mutex::new(WindowState::new()));
         Self {
             version: plugin_version!(0, 1, 0),
             state,
-            tx,
-            // Initialize other fields as needed
         }
+    }
+
+    fn update_ui(&mut self, ctx: &egui::Context) {
+        // Implement UI update logic here
+        println!("Updating WindowPlugin UI");
     }
 }
 
@@ -70,127 +69,137 @@ impl Plugin for WindowPlugin {
         true // Or implement a field for this
     }
 
-    fn set_enabled(&mut self, enabled: bool) {
+    fn set_enabled(&mut self, _enabled: bool) {
         // Implement enabling/disabling logic
     }   
    
     fn update(&mut self, ctx: &egui::Context, message_handler: &mut dyn MessageHandler) {
-        // Process incoming messages
+        // Collect messages first
+        let mut messages = Vec::new();
         while let Some(message) = message_handler.receive_message() {
+            messages.push(message);
+        }
+    
+        // Process collected messages
+        for message in messages {
             self.handle_message(message, message_handler);
         }
-
-        // Process incoming messages
-        while let Some(message) = message_handler.receive_message() {
-            self.handle_message(message, message_handler);
-        }
+    
         // Update UI
-        self.update_ui(ctx);  
-        println!("WindowPlug update ...yey!");
+        self.update_ui(ctx);
+        println!("WindowPlugin update...yey!");
     }
 
     fn on_load(&mut self) {
-        // Add a placeholder window when the plugin loads
-        //Todo: Necessary?
-        /*let mut state = self.state.lock().unwrap();
-        state.windows.push(Window {
-            title: "Placeholder".to_string(),
-            content: "This is a placeholder window".to_string(),
-            is_minimized: false,
-        });*/
+        // Add initialization logic if needed
     }
 
     fn on_unload(&mut self) {
         // Clean up if necessary
     }
-    
-
 }
 
 impl WindowPlugin {
     fn handle_message(&mut self, message: Message, message_handler: &mut dyn MessageHandler) {
         match message {
-            Message::WindowPlugin(window_message) => {
-                match window_message {
-                   /* WindowPluginMessage::AddWindow => {
-                        let mut state = self.state.lock().unwrap();
-                        state.about_counter += 1;
-                        /--*addback state.windows.push(Window {
-                            title: format!("Window {}", state.about_counter),
-                            content: format!("This is window number {}", state.about_counter),
-                            is_minimized: false,
-                        });*--/
-                        println!("Added a new window");
-                    },*/
-
-
-                    WindowPluginMessage::AddWindow => {
-                        println!("Adding a new window yey!");
-                        // You might want to send a message back to confirm the window was added
-                      //addback  let _ = message_handler.send_message(Message::WindowPlugin(WindowPluginMessage::WindowAdded));
-                    },
-                    WindowPluginMessage::ConfirmedCloseWindow(_) => todo!(),
-                    WindowPluginMessage::MinimizeWindow(_) => todo!(),
-                    WindowPluginMessage::DragWindowStart(_, pos2) => todo!(),
-                    WindowPluginMessage::DragWindowMove(pos2) => todo!(),
-                    WindowPluginMessage::DragWindowEnd => todo!(),
-                    WindowPluginMessage::CollapseWindow(_) => todo!(),
-
-                    /*Todo - this should be ConfirmeClosedWindowd()
-                    WindowPluginMessage::CloseWindow(_) => todo!(), /*remove*/
-                    WindowPluginMessage::CollapseWindow(id) => {
-                        let mut state = self.state.lock().unwrap();
-                        if let Some(window) = state.windows.get_mut(id) {
-                            window.is_minimized = !window.is_minimized;
-                            println!("Toggled window {} minimization", id);
-                        }
-                    },*/
-                    // Handle other WindowPluginMessage variants as needed
+            Message::PluginSpecific { content, priority } => {
+                if let Some(window_message) = content.as_any().downcast_ref::<WindowPluginMessage>() {
+                    match window_message {
+                        WindowPluginMessage::AddWindow => {
+                            println!("Adding a new window");
+                            self.add_window();
+                            let response = Message::ControllerMessage {
+                                target_controller_id: "window_controller".to_string(),
+                                content: ControllerMessage::WindowController(
+                                    WindowControllerMessage::RequestAddWindow { priority }
+                                ),
+                                priority,
+                            };
+                            message_handler.send_message(response);
+                        },
+                        WindowPluginMessage::ConfirmedCloseWindow(index) => {
+                            self.close_window(*index);
+                        },
+                        WindowPluginMessage::MinimizeWindow(index) => {
+                            self.minimize_window(*index);
+                        },
+                        WindowPluginMessage::DragWindowStart(index, pos) => {
+                            self.start_window_drag(*index, *pos);
+                        },
+                        WindowPluginMessage::DragWindowMove(pos) => {
+                            self.move_dragged_window(*pos);
+                        },
+                        WindowPluginMessage::DragWindowEnd => {
+                            self.end_window_drag();
+                        },
+                        WindowPluginMessage::CollapseWindow(index) => {
+                            self.collapse_window(*index);
+                        },
+                    }
                 }
             },
-            _ => {} // Ignore other message types
+            Message::ControllerMessage { content: ControllerMessage::WindowController(controller_msg), priority, .. } => {
+                match controller_msg {
+                    WindowControllerMessage::RequestCloseWindow { window_index, .. } => {
+                        /* ADDBACK self.close_window(*window_index);
+                        let response = Message::ControllerMessage {
+                            target_controller_id: "window_controller".to_string(),
+                            content: ControllerMessage::WindowController(
+                                WindowControllerMessage::RequestCloseWindow { window_index: *window_index, priority }
+                            ),
+                            priority,
+                        };
+                        message_handler.send_message(response); */
+                    },
+                    WindowControllerMessage::RequestAddWindow { .. } => {
+                        self.add_window();
+                    },
+                    // Handle other WindowControllerMessage variants as needed
+                }
+            },
+            _ => {
+                // Ignore messages not relevant to this plugin
+                println!("Message ignored by WindowPlugin");
+            }
         }
     }
 
-    fn update_ui(&self, ctx: &egui::Context) {
-        let state = self.state.lock().unwrap();
-        
-        egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                for (index, window) in state.windows.iter().enumerate() {
-                    self.render_window(ui, window, index);
-                }
-            });
-        });
+    fn add_window(&mut self) {
+        println!("pass window to UIViewPlugin");
+        // Implement actual window addition logic here
     }
 
-    fn render_window(&self, ui: &mut egui::Ui, window: &Window, index: usize) {
-        //addback render our Frame here
-        let frame = egui::Frame::none()
-            .fill(egui::Color32::from_gray(240))
-            .stroke(egui::Stroke::new(1.0, egui::Color32::BLACK))
-            .rounding(egui::Rounding::same(5.0));
-            //.shadow(egui::epaint::Shadow::small_light());
+    fn close_window(&mut self, index: usize) {
+        let mut state = self.state.lock().unwrap();
+        if index < state.windows.len() {
+            state.windows.remove(index);
+            state.grid.retain(|&x| x != index);
+            for grid_index in state.grid.iter_mut() {
+                if *grid_index > index {
+                    *grid_index -= 1;
+                }
+            }
+            println!("Window closed");
+        }
+    }
 
-        frame.show(ui, |ui| {
-            ui.vertical(|ui| {
-                /* Todo: Window controls and props
-                ui.horizontal(|ui| {
-                    ui.label(&window.title);
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("❌").clicked() {
-                        //addback    let _ = self.tx.send(Message::WindowPlugin(WindowPluginMessage::ConfirmedCloseWindow(index)));
-                        }
-                        if ui.button(if window.is_minimized { "🗖" } else { "🗕" }).clicked() {
-                         //addback   let _ = self.tx.send(Message::WindowPlugin(WindowPluginMessage::CollapseWindow(index)));
-                        }
-                    });
-                });
+    fn minimize_window(&mut self, _index: usize) {
+        // Implement minimize logic
+    }
 
-                if !window.is_minimized {
-                    ui.label(&window.content);
-                }*/
-            });
-        });
+    fn start_window_drag(&mut self, _index: usize, _pos: egui::Pos2) {
+        // Implement drag start logic
+    }
+
+    fn move_dragged_window(&mut self, _pos: egui::Pos2) {
+        // Implement drag move logic
+    }
+
+    fn end_window_drag(&mut self) {
+        // Implement drag end logic
+    }
+
+    fn collapse_window(&mut self, _index: usize) {
+        // Implement collapse logic
     }
 }

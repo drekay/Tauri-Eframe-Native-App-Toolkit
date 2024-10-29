@@ -4,3 +4,116 @@ Documentation ident_case
  Great. Now go step by step to add this to our codebase.
 Remember to use generalisations as we are making a toolkit for anyone wishing to build a high performing dynamic plugin system.
 
+---
+when using Concrete Plugin Messages we can now compare Priority with simple comparison. With this Message Setup we can ensure that the basic functionality of General, Controller and Master Plugins is adhered to then allow extra functionality using Custom Messages.
+
+Can you analyse and advise that the PluginMessage will now be used for Custom-Controller Plugin messages and Non-Controller Plugin Messages and their downcasting.
+
+Your approach is sound and provides a good balance between type safety for core functionality and flexibility for custom messages. Let's analyze the setup and suggest how to incorporate it into your existing code:
+Concrete Controller Messages:
+These will use the ControllerMessage variant in the Message enum, providing type safety and easy handling for core functionality.
+Custom-Controller Plugin Messages:
+These will use the Custom variant in the Message enum and implement the PluginMessage trait. They'll be specific to certain controller plugins but not part of the core functionality.
+Non-Controller Custom Messages:
+These will also use the Custom variant and implement the PluginMessage trait, but will be for plugins that are not controllers.
+Here's how we can incorporate this into your code:
+Update the Message enum:
+rust
+pub enum Message {
+    Broadcast {
+        content: String,
+        priority: Priority,
+    },
+    ControllerMessage {
+        content: ControllerMessage,
+        priority: Priority,
+    },
+    Custom(Arc<dyn PluginMessage>),
+    ControllerUpdated(String),
+}
+
+Implement handling in the WindowControllerPlugin:
+rust
+impl WindowControllerPlugin {
+    fn handle_message(&mut self, message: Message) {
+        match message {
+            Message::ControllerMessage { content, priority } => {
+                self.handle_concrete_controller_message(content, priority);
+            },
+            Message::Custom(custom_msg) => {
+                if custom_msg.plugin_type() == PluginType::WindowController {
+                    self.handle_custom_controller_message(custom_msg);
+                } else {
+                    // Forward non-controller messages to appropriate plugins
+                    self.forward_message(custom_msg);
+                }
+            },
+            // Handle other message types...
+        }
+    }
+
+    fn handle_concrete_controller_message(&mut self, content: ControllerMessage, priority: Priority) {
+        match content {
+            ControllerMessage::WindowController(window_msg) => {
+                // Handle concrete WindowControllerMessage types
+            },
+            // Handle other concrete ControllerMessage types...
+        }
+    }
+
+    fn handle_custom_controller_message(&mut self, msg: Arc<dyn PluginMessage>) {
+        // Downcast and handle custom controller messages
+        if let Some(custom_msg) = msg.downcast_ref::<CustomWindowControllerMessage>() {
+            // Handle CustomWindowControllerMessage
+        }
+        // Handle other custom controller message types...
+    }
+
+    fn forward_message(&self, msg: Arc<dyn PluginMessage>) {
+        // Logic to forward message to appropriate plugin based on plugin_type
+    }
+}
+
+Implement custom message types:
+rust
+struct CustomWindowControllerMessage {
+    // Custom fields
+}
+
+impl PluginMessage for CustomWindowControllerMessage {
+    fn priority(&self) -> Priority {
+        // Return appropriate priority
+    }
+
+    fn plugin_type(&self) -> PluginType {
+        PluginType::WindowController
+    }
+}
+
+Update the WindowPlugin to handle both concrete and custom messages:
+rust
+impl WindowPlugin {
+    fn handle_message(&mut self, message: Message) {
+        match message {
+            Message::WindowPlugin(window_message) => {
+                // Handle concrete WindowPluginMessage types
+            },
+            Message::Custom(custom_msg) => {
+                if custom_msg.plugin_type() == PluginType::Window {
+                    // Downcast and handle custom window messages
+                    if let Some(custom_window_msg) = custom_msg.downcast_ref::<CustomWindowMessage>() {
+                        // Handle CustomWindowMessage
+                    }
+                }
+            },
+            // Handle other message types...
+        }
+    }
+}
+
+This approach allows you to:
+Use concrete types for core functionality, ensuring type safety and ease of use.
+Extend functionality with custom messages for both controller and non-controller plugins.
+Maintain a consistent interface for all custom messages through the PluginMessage trait.
+Route messages appropriately based on their type and intended recipient.
+Remember to implement proper error handling for cases where downcasting fails, and consider adding logging or debugging information to help track message flow through your system.
