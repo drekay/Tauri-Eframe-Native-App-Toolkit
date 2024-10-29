@@ -36,22 +36,23 @@ graph TD
     MenuPlugin[Menu Plugin]
     MainApp[Main Application Window]
     
-    WindowControl -->|Provides window control functionality| MainApp
-    UIView -->|Renders user interface| MainApp
-    Window -->|Manages window display| MainApp
-    MenuPlugin -->|Handles menu operations| MainApp
+    WindowControl -->|Provides window control <br> functionality| MainApp
+    UIView -->|Renders user <br> interface| MainApp
+    Window -->|Manages window <br> display| MainApp
+    MenuPlugin -->|Handles menu \n operations| MainApp
 
-    MasterPlugin[MasterPlugin] -->|Manages overall application| MainApp
+    MasterPlugin[MasterPlugin] -->|Manages overall <br> application| MainApp
     
-    MainApp -->|Contains and manages| ChildPlugins[Child Plugins]
-    ChildPlugins -->|Handles background tasks| BackgroundPlugin[Background Plugin]
-    ChildPlugins -->|Manages additional window features| WindowPlugin[Window Plugin]
-    ChildPlugins -->|Wraps window functionality| WindowWrapper[Window Wrapper]
+    MainApp -->|Contains and \n manages| ChildPlugins[Child Plugins]
+    ChildPlugins -->|Handles background <br> tasks| BackgroundPlugin[Background Plugin]
+    ChildPlugins -->|Manages additional <br> window features| WindowPlugin[Window Plugin]
+    ChildPlugins -->|Wraps window <br> functionality| WindowWrapper[Window Wrapper]
 
     %% Apply the default class to all nodes for styling
     class WindowControl,UIView,Window,MenuPlugin,MainApp,MasterPlugin,ChildPlugins,BackgroundPlugin,WindowPlugin,WindowWrapper default
 ```
-## Plugin Architecture
+## Plugin Architecture 
+(Not up to date)
 
 The toolkit now uses a Plugin Architecture, which includes:
 
@@ -149,6 +150,7 @@ There are two main ways to use the Tauri Eframe Native App Toolkit:
 
 ```bash
 git clone https://github.com/your-username/tauri-eframe-native-app-toolkit.git
+git switch dynamic_strict_plugin_architecture
 cd tauri-eframe-native-app-toolkit
 ```
 
