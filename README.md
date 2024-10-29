@@ -4,6 +4,7 @@ A toolkit for creating native applications using Tauri and Eframe, with a focus 
 
 # NB: This is still EXPERIMENTAL and UNDER DEVELOPMENT!!
 
+(*This README is not updated frequently. If you want to follow the development progress look at the 'dynamic_strict_plugin_architecture' branch*)
 ## Dependencies
 
 | Component | Description | Version |
