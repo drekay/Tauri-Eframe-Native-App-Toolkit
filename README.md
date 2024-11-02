@@ -17,8 +17,7 @@ A toolkit for creating native applications using Tauri and Eframe, with a focus 
 The goal of this toolkit is to enable developers to produce cross-platform desktop applications that offer a seamless and native user experience. By leveraging the power of Tauri and Eframe, developers can build applications that are both lightweight and performant.
 
 
-https://github.com/user-attachments/assets/b790b62a-0b96-4b15-8be9-f214942d1d9e
-
+<div style="display: flex; justify-content: space-between;"> <img src="https://github.com/user-attachments/assets/b790b62a-0b96-4b15-8be9-f214942d1d9e" width="48%" alt="Image 1"> <img src="https://github.com/user-attachments/assets/f21c71dd-41b1-4cc3-ba05-88219318e2b4" width="48%" alt="Image 2"> </div> 
 
 ## Example: How to Create an Application with Draggable Windows
 
