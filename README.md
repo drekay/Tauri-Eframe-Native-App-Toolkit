@@ -27,6 +27,101 @@ The goal of this toolkit is to enable developers to produce cross-platform deskt
 
 ```mermaid
 graph TD
+    classDef default fill:#003366,stroke:#333,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef appWindow fill:#005A9C,stroke:#333,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef childWindow fill:#0077BE,stroke:#333,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef pluginWindow fill:#4682B4,stroke:#333,stroke-width:2px,color:#ffffff,font-weight:bold;
+    classDef wrapper fill:#8B4513,stroke:#333,stroke-width:2px,color:#ffffff,font-weight:bold;
+
+    MasterPlugin[MasterPlugin]
+    OtherPlugin[Other Plugin<br>e.g. Network or DB]
+
+    subgraph ApplicationWindowWrapper["ApplicationWindowWrapper"]
+        AW_WP[Window Plugin]
+        AW_BP[Backend Plugin]
+        
+        subgraph ApplicationWindow["ApplicationWindow"]
+            AW_WCP[Window Controller Plugin]
+            AW_MP[Menu Plugin]
+            AW_MCP[Menu Controller Plugin]
+            subgraph AW_UIVP[UI View Plugin]
+                AW_EGUIWindow[EGUIWindow]
+            end
+        end
+    end
+
+    subgraph ChildWindowWrapper["ChildWindowWrapper"]
+        CW_WP[Window Plugin]
+        CW_BP[Backend Plugin]
+        
+        subgraph ChildWindow["ChildWindow"]
+            CW_WCP[Window Controller Plugin]
+            CW_MP[Menu Plugin]
+            CW_MCP[Menu Controller Plugin]
+            subgraph CW_UIVP[UI View Plugin]
+                CW_EGUIWindow[EGUIWindow]
+            end
+        end
+    end
+
+    subgraph PluginWindow["PluginWindow"]
+        PW_WCP[Window Controller Plugin]
+        PW_UIVP[UI View Plugin]
+    end
+
+    %% ApplicationWindowWrapper relationships
+    AW_WP -->|Owns| AW_EGUIWindow
+    AW_WP -->|Manages| AW_UIVP
+    AW_WP -->|Interacts with| AW_WCP
+    AW_UIVP -->|Passes messages| AW_WCP
+    AW_MP -->|Passes interaction messages| AW_MCP
+    AW_MCP -->|Processes or passes<br>UI interaction messages| AW_UIVP
+    AW_MCP -.->|Updates menu state| AW_MP
+    AW_WCP -->|Decides actions based on<br>requests and updates| AW_MCP
+    AW_WCP -->|Uses| AW_BP
+    AW_BP --> MasterPlugin
+
+    %% ChildWindowWrapper relationships
+    CW_WP -->|Owns| CW_EGUIWindow
+    CW_WP -->|Manages| CW_UIVP
+    CW_WP -->|Interacts with| CW_WCP
+    CW_UIVP -->|Passes messages| CW_WCP
+    CW_MP -->|Passes interaction messages| CW_MCP
+    CW_MCP -->|Processes or passes<br>UI interaction messages| CW_UIVP
+    CW_MCP -.->|Updates menu state| CW_MP
+    CW_WCP -->|Decides actions based on<br>requests and updates| CW_MCP
+    CW_WCP -->|Uses| CW_BP
+    CW_BP -->|Bridges with<br>Parent or Master| AW_BP
+
+    %% Plugin Window relationships
+    PW_WCP --> PW_UIVP
+
+    %% Master Plugin relationships
+    MasterPlugin --> OtherPlugin
+
+    %% Parent-Child relationships
+    ApplicationWindowWrapper -->|Owns and manages| ChildWindowWrapper
+    AW_UIVP -.->|Can embed| ChildWindow
+
+    %% Annotations
+    ApplicationWindowWrapper ---|Can have<br>ChildWindows or Plugins| ApplicationWindowWrapper
+    ChildWindowWrapper ---|Can be modal or<br>embedded in parent| ChildWindowWrapper
+    PluginWindow ---|No Backend,<br>relies on ApplicationWindowWrapper| PluginWindow
+    AW_WP -->|"Connects to for<br>window-specific operations"| AW_BP
+    CW_WP -->|"Connects to for<br>window-specific operations"| CW_BP
+
+    %% Apply styles
+    class MasterPlugin,OtherPlugin default;
+    class ApplicationWindowWrapper,AW_WP,AW_BP wrapper;
+    class ApplicationWindow,AW_WCP,AW_MP,AW_MCP,AW_UIVP,AW_EGUIWindow appWindow;
+    class ChildWindowWrapper,CW_WP,CW_BP wrapper;
+    class ChildWindow,CW_MP,CW_MCP,CW_UIVP,CW_WCP,CW_EGUIWindow childWindow;
+    class PW_WCP,PW_UIVP pluginWindow;
+
+```
+
+```mermaid
+graph TD
     style MainApp fill:#003366,stroke:#333,stroke-width:2px;
     classDef default fill:#003366,stroke:#333,stroke-width:2px,color:#ffffff,font-weight:bold;
 
